@@ -19,6 +19,14 @@ Dialog {
     property alias description: descInput.text
     property string status: statusCombo.currentText.toLowerCase()
 
+    DatePickerDialog {
+        id: datePicker
+        anchors.centerIn: parent
+        onDateSelected: function(selectedDate) {
+            deadlineInput.text = selectedDate
+        }
+    }
+
     function setProject(p) {
         if (p && p.id) {
             isEdit = true
@@ -51,6 +59,7 @@ Dialog {
         CustomTextField {
             id: titleInput
             label: "Project Title *"
+            placeholderText: "e.g., E-Commerce Platform Redesign"
             Layout.fillWidth: true
         }
 
@@ -61,12 +70,14 @@ Dialog {
             CustomTextField {
                 id: clientNameInput
                 label: "Client Name"
+                placeholderText: "e.g., Acme Corporation"
                 Layout.fillWidth: true
             }
 
             CustomTextField {
                 id: clientEmailInput
                 label: "Client Email"
+                placeholderText: "e.g., client@acme.com"
                 Layout.fillWidth: true
             }
         }
@@ -75,11 +86,30 @@ Dialog {
             Layout.fillWidth: true
             spacing: 12
 
-            CustomTextField {
-                id: deadlineInput
-                label: "Deadline (YYYY-MM-DD)"
-                placeholderText: "2026-12-31"
+            RowLayout {
                 Layout.fillWidth: true
+                spacing: 4
+
+                CustomTextField {
+                    id: deadlineInput
+                    label: "Deadline"
+                    placeholderText: "YYYY-MM-DD"
+                    Layout.fillWidth: true
+                }
+
+                Button {
+                    flat: true
+                    implicitWidth: 38
+                    implicitHeight: 38
+                    Layout.alignment: Qt.AlignBottom
+                    contentItem: Image {
+                        anchors.centerIn: parent
+                        source: "../../assets/calendar.svg"
+                        sourceSize.width: 18
+                        sourceSize.height: 18
+                    }
+                    onClicked: datePicker.open()
+                }
             }
 
             ColumnLayout {
@@ -88,7 +118,7 @@ Dialog {
 
                 Text {
                     text: "Status"
-                    font.pixelSize: 12
+                    font.pixelSize: 11
                     font.weight: Font.Medium
                     color: "#5F6368"
                 }
@@ -107,7 +137,7 @@ Dialog {
 
             Text {
                 text: "Description / Notes"
-                font.pixelSize: 12
+                font.pixelSize: 11
                 font.weight: Font.Medium
                 color: "#5F6368"
             }
@@ -116,6 +146,7 @@ Dialog {
                 id: descInput
                 Layout.fillWidth: true
                 implicitHeight: 80
+                placeholderText: "Add key requirements, scope details, or client preferences..."
                 wrapMode: TextArea.Wrap
                 background: Rectangle {
                     radius: 6

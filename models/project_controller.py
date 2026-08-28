@@ -1,6 +1,6 @@
 from PySide6.QtCore import QObject, Signal, Slot, Property
 from db.database import DatabaseManager
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 class ProjectController(QObject):
     # Signals to notify QML when data changes
@@ -8,6 +8,7 @@ class ProjectController(QObject):
     selectedProjectChanged = Signal()
     dashboardStatsChanged = Signal()
     upcomingDeadlinesChanged = Signal()
+    auditLogsChanged = Signal()
 
     def __init__(self, db_path: str = "project_tracker.db", parent=None):
         super().__init__(parent)
@@ -16,6 +17,7 @@ class ProjectController(QObject):
         self._selected_project: Dict[str, Any] = {}
         self._dashboard_stats: Dict[str, Any] = {}
         self._upcoming_deadlines: List[Dict[str, Any]] = []
+        self._audit_logs: List[Dict[str, Any]] = []
         self._status_filter = "all"
         self._search_text = ""
 
@@ -25,6 +27,7 @@ class ProjectController(QObject):
     def refresh_all(self):
         self.refresh_projects()
         self.refresh_dashboard()
+        self.refresh_audit_logs()
         if self._selected_project and 'id' in self._selected_project:
             self.load_project_details(self._selected_project['id'])
 
@@ -43,6 +46,12 @@ class ProjectController(QObject):
         self.dashboardStatsChanged.emit()
         self.upcomingDeadlinesChanged.emit()
 
+    @Slot()
+    def refresh_audit_logs(self):
+        pid = self._selected_project.get('id') if self._selected_project else None
+        self._audit_logs = self.db.get_audit_logs(project_id=pid, limit=50)
+        self.auditLogsChanged.emit()
+
     # --- Properties exposed to QML ---
     @Property(list, notify=projectsChanged)
     def projects(self):
@@ -59,6 +68,10 @@ class ProjectController(QObject):
     @Property(list, notify=upcomingDeadlinesChanged)
     def upcomingDeadlines(self):
         return self._upcoming_deadlines
+
+    @Property(list, notify=auditLogsChanged)
+    def auditLogs(self):
+        return self._audit_logs
 
     # --- Filtering and Search ---
     @Slot(str)
@@ -80,6 +93,7 @@ class ProjectController(QObject):
         if proj:
             self._selected_project = proj
             self.selectedProjectChanged.emit()
+            self.refresh_audit_logs()
 
     @Slot(str, str, str, str, str, str, result=int)
     def add_project(self, title: str, client_name: str, client_email: str, status: str, deadline: str, description: str) -> int:
