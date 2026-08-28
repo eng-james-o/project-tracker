@@ -1,10 +1,15 @@
-# Environment and cache python files
+# Environment files
 .env
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
 env/
 venv/
 .venv/
 *.env
+
+# Cache and temporary python files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Database
+*.db
