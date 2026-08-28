@@ -1,0 +1,68 @@
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+
+Rectangle {
+    id: root
+    property var step: ({})
+    signal toggled(bool completed)
+    signal editClicked()
+    signal deleted()
+
+    implicitHeight: 44
+    radius: 6
+    color: "#F8F9FA"
+    border.color: "#E0E0E0"
+    border.width: 1
+
+    RowLayout {
+        anchors.fill: parent
+        anchors.leftMargin: 12
+        anchors.rightMargin: 12
+        spacing: 10
+
+        CheckBox {
+            id: chk
+            checked: root.step.completed || false
+            onToggled: root.toggled(chk.checked)
+        }
+
+        Text {
+            text: root.step.title || ""
+            font.pixelSize: 13
+            font.strikeout: root.step.completed
+            color: root.step.completed ? "#80868B" : "#202124"
+            Layout.fillWidth: true
+            elide: Text.ElideRight
+        }
+
+        RowLayout {
+            spacing: 4
+            visible: root.step.deadline && root.step.deadline.length > 0
+
+            Image {
+                source: "../../assets/calendar.svg"
+                sourceSize.width: 12
+                sourceSize.height: 12
+            }
+
+            Text {
+                text: root.step.deadline || ""
+                font.pixelSize: 11
+                color: "#70757A"
+            }
+        }
+
+        CustomButton {
+            variant: "icon"
+            iconSource: "../../assets/edit.svg"
+            onClicked: root.editClicked()
+        }
+
+        CustomButton {
+            variant: "icon"
+            iconSource: "../../assets/trash.svg"
+            onClicked: root.deleted()
+        }
+    }
+}
