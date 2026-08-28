@@ -64,8 +64,8 @@ A clean, modern, offline-first Project Tracker desktop application built with **
 
 2. **Create and activate a virtual environment** (optional but recommended):
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```
 
 3. **Install dependencies**:

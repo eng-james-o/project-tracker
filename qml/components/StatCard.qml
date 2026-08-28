@@ -13,6 +13,7 @@ Rectangle {
     radius: 10
     color: "#FFFFFF"
 
+    // Drop shadow simulation via soft border
     border.color: "#E0E0E0"
     border.width: 1
 

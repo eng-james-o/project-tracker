@@ -118,7 +118,7 @@ Dialog {
 
                 Text {
                     text: "Status"
-                    font.pixelSize: 11
+                    font.pixelSize: 12
                     font.weight: Font.Medium
                     color: "#5F6368"
                 }
@@ -137,7 +137,7 @@ Dialog {
 
             Text {
                 text: "Description / Notes"
-                font.pixelSize: 11
+                font.pixelSize: 12
                 font.weight: Font.Medium
                 color: "#5F6368"
             }

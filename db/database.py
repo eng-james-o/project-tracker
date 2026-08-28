@@ -363,6 +363,7 @@ class DatabaseManager:
             }
 
     def get_upcoming_deadlines(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Returns projects, steps, and deliverables that have non-empty deadlines and are not completed."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             items = []
