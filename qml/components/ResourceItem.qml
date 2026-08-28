@@ -14,13 +14,13 @@ Rectangle {
     border.color: "#E0E0E0"
     border.width: 1
 
-    function getIcon(type) {
+    function getIconSource(type) {
         switch(type) {
-            case "link": return "🔗"
-            case "document": return "📄"
-            case "folder": return "📁"
-            case "note": return "📝"
-            default: return "📌"
+            case "link": return "../../assets/link.svg"
+            case "document": return "../../assets/file-text.svg"
+            case "folder": return "../../assets/projects.svg"
+            case "note": return "../../assets/edit.svg"
+            default: return "../../assets/file-text.svg"
         }
     }
 
@@ -35,10 +35,11 @@ Rectangle {
             radius: 16
             color: "#F1F3F4"
 
-            Text {
+            Image {
                 anchors.centerIn: parent
-                text: root.getIcon(root.resource.type)
-                font.pixelSize: 16
+                source: root.getIconSource(root.resource.type)
+                sourceSize.width: 16
+                sourceSize.height: 16
             }
         }
 
@@ -76,10 +77,15 @@ Rectangle {
         }
 
         Button {
-            text: "🗑️"
             flat: true
             implicitWidth: 30
             implicitHeight: 30
+            contentItem: Image {
+                anchors.centerIn: parent
+                source: "../../assets/trash.svg"
+                sourceSize.width: 16
+                sourceSize.height: 16
+            }
             onClicked: root.deleted()
         }
     }

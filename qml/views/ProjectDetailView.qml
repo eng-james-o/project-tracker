@@ -12,6 +12,63 @@ ScrollView {
 
     property var project: projectController.selectedProject
 
+    property int itemToDeleteId: 0
+    property string itemToDeleteType: "" // "step", "deliverable", "resource", "project"
+
+    DatePickerDialog {
+        id: stepDatePicker
+        anchors.centerIn: parent
+        onDateSelected: function(selectedDate) {
+            newStepDeadline.text = selectedDate
+        }
+    }
+
+    DatePickerDialog {
+        id: delivDatePicker
+        anchors.centerIn: parent
+        onDateSelected: function(selectedDate) {
+            newDelivDeadline.text = selectedDate
+        }
+    }
+
+    // Generic Delete Confirmation Dialog
+    Dialog {
+        id: confirmDeleteDialog
+        title: "Confirm Deletion"
+        modal: true
+        standardButtons: Dialog.Yes | Dialog.No
+        anchors.centerIn: parent
+
+        Text {
+            text: {
+                if (root.itemToDeleteType === "project")
+                    return "Are you sure you want to delete this project and all its tasks, deliverables, and resources?"
+                else if (root.itemToDeleteType === "step")
+                    return "Are you sure you want to delete this step?"
+                else if (root.itemToDeleteType === "deliverable")
+                    return "Are you sure you want to delete this deliverable?"
+                else if (root.itemToDeleteType === "resource")
+                    return "Are you sure you want to remove this resource?"
+                return "Are you sure you want to proceed?"
+            }
+            font.pixelSize: 13
+            color: "#202124"
+        }
+
+        onAccepted: {
+            if (root.itemToDeleteType === "project") {
+                projectController.delete_project(root.project.id)
+                root.backClicked()
+            } else if (root.itemToDeleteType === "step") {
+                projectController.delete_step(root.itemToDeleteId)
+            } else if (root.itemToDeleteType === "deliverable") {
+                projectController.delete_deliverable(root.itemToDeleteId)
+            } else if (root.itemToDeleteType === "resource") {
+                projectController.delete_resource(root.itemToDeleteId)
+            }
+        }
+    }
+
     ColumnLayout {
         width: parent.width - 40
         anchors.horizontalCenter: parent.horizontalCenter
@@ -33,7 +90,7 @@ ScrollView {
             Item { Layout.fillWidth: true }
 
             CustomButton {
-                text: "✏️ Edit Project"
+                text: "Edit Project"
                 variant: "secondary"
                 onClicked: {
                     projectDialog.setProject(root.project)
@@ -42,9 +99,12 @@ ScrollView {
             }
 
             CustomButton {
-                text: "🗑️ Delete"
+                text: "Delete"
                 variant: "danger"
-                onClicked: confirmDeleteDialog.open()
+                onClicked: {
+                    root.itemToDeleteType = "project"
+                    confirmDeleteDialog.open()
+                }
             }
         }
 
@@ -82,17 +142,50 @@ ScrollView {
                     Layout.fillWidth: true
                     spacing: 24
 
+                    RowLayout {
+                        spacing: 6
+                        Image {
+                            source: "../../assets/user.svg"
+                            sourceSize.width: 14
+                            sourceSize.height: 14
+                        }
+                        Text {
+                            text: "Client: " + (root.project.client_name || "N/A") + (root.project.client_email ? (" (" + root.project.client_email + ")") : "")
+                            font.pixelSize: 13
+                            color: "#5F6368"
+                        }
+                    }
+
+                    RowLayout {
+                        spacing: 6
+                        Image {
+                            source: "../../assets/calendar.svg"
+                            sourceSize.width: 14
+                            sourceSize.height: 14
+                        }
+                        Text {
+                            text: "Deadline: " + (root.project.deadline || "None")
+                            font.pixelSize: 13
+                            font.bold: true
+                            color: root.project.deadline ? "#C5221F" : "#5F6368"
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 24
+
                     Text {
-                        text: "👤 Client: " + (root.project.client_name || "N/A") + (root.project.client_email ? (" (" + root.project.client_email + ")") : "")
-                        font.pixelSize: 13
-                        color: "#5F6368"
+                        text: "Created: " + (root.project.created_at || "N/A")
+                        font.pixelSize: 11
+                        color: "#70757A"
                     }
 
                     Text {
-                        text: "📅 Deadline: " + (root.project.deadline || "None")
-                        font.pixelSize: 13
-                        font.bold: true
-                        color: root.project.deadline ? "#C5221F" : "#5F6368"
+                        text: "Last Updated: " + (root.project.updated_at || "N/A")
+                        font.pixelSize: 11
+                        color: "#70757A"
                     }
                 }
 
@@ -132,16 +225,11 @@ ScrollView {
                         anchors.margins: 16
                         spacing: 12
 
-                        RowLayout {
-                            Layout.fillWidth: true
-
-                            Text {
-                                text: "Project Steps / Tasks"
-                                font.pixelSize: 16
-                                font.bold: true
-                                color: "#202124"
-                                Layout.fillWidth: true
-                            }
+                        Text {
+                            text: "Project Steps / Tasks"
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: "#202124"
                         }
 
                         // Add Step Input Box
@@ -151,14 +239,31 @@ ScrollView {
 
                             CustomTextField {
                                 id: newStepTitle
-                                placeholderText: "Step title..."
+                                placeholderText: "Step title (e.g., Wireframing, API Design)..."
                                 Layout.fillWidth: true
                             }
 
-                            CustomTextField {
-                                id: newStepDeadline
-                                placeholderText: "Deadline (YYYY-MM-DD)"
-                                implicitWidth: 150
+                            RowLayout {
+                                spacing: 4
+
+                                CustomTextField {
+                                    id: newStepDeadline
+                                    placeholderText: "YYYY-MM-DD"
+                                    implicitWidth: 120
+                                }
+
+                                Button {
+                                    flat: true
+                                    implicitWidth: 34
+                                    implicitHeight: 34
+                                    contentItem: Image {
+                                        anchors.centerIn: parent
+                                        source: "../../assets/calendar.svg"
+                                        sourceSize.width: 16
+                                        sourceSize.height: 16
+                                    }
+                                    onClicked: stepDatePicker.open()
+                                }
                             }
 
                             CustomButton {
@@ -181,7 +286,11 @@ ScrollView {
                                 Layout.fillWidth: true
                                 step: modelData
                                 onToggled: function(completed) { projectController.toggle_step(modelData.id, completed) }
-                                onDeleted: projectController.delete_step(modelData.id)
+                                onDeleted: {
+                                    root.itemToDeleteType = "step"
+                                    root.itemToDeleteId = modelData.id
+                                    confirmDeleteDialog.open()
+                                }
                             }
                         }
 
@@ -222,14 +331,31 @@ ScrollView {
 
                             CustomTextField {
                                 id: newDelivTitle
-                                placeholderText: "Deliverable title..."
+                                placeholderText: "Deliverable title (e.g., Final Prototype PDF)..."
                                 Layout.fillWidth: true
                             }
 
-                            CustomTextField {
-                                id: newDelivDeadline
-                                placeholderText: "Deadline (YYYY-MM-DD)"
-                                implicitWidth: 150
+                            RowLayout {
+                                spacing: 4
+
+                                CustomTextField {
+                                    id: newDelivDeadline
+                                    placeholderText: "YYYY-MM-DD"
+                                    implicitWidth: 120
+                                }
+
+                                Button {
+                                    flat: true
+                                    implicitWidth: 34
+                                    implicitHeight: 34
+                                    contentItem: Image {
+                                        anchors.centerIn: parent
+                                        source: "../../assets/calendar.svg"
+                                        sourceSize.width: 16
+                                        sourceSize.height: 16
+                                    }
+                                    onClicked: delivDatePicker.open()
+                                }
                             }
 
                             CustomButton {
@@ -252,7 +378,11 @@ ScrollView {
                                 Layout.fillWidth: true
                                 deliverable: modelData
                                 onToggled: function(completed) { projectController.toggle_deliverable(modelData.id, completed) }
-                                onDeleted: projectController.delete_deliverable(modelData.id)
+                                onDeleted: {
+                                    root.itemToDeleteType = "deliverable"
+                                    root.itemToDeleteId = modelData.id
+                                    confirmDeleteDialog.open()
+                                }
                             }
                         }
 
@@ -266,12 +396,13 @@ ScrollView {
                 }
             }
 
-            // Right Column: Resources & Notes
+            // Right Column: Resources & Audit Trail
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 45
                 spacing: 20
 
+                // Resources Section
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: resColumn.implicitHeight + 32
@@ -309,7 +440,7 @@ ScrollView {
 
                                 CustomTextField {
                                     id: resTitleInput
-                                    placeholderText: "Resource Title..."
+                                    placeholderText: "Resource Title (e.g., Design Brief)..."
                                     Layout.fillWidth: true
                                 }
                             }
@@ -337,14 +468,23 @@ ScrollView {
                             }
                         }
 
-                        // Resources List
-                        Repeater {
-                            model: root.project.resources || []
+                        // Resources Scrollable List
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
 
-                            delegate: ResourceItem {
-                                Layout.fillWidth: true
-                                resource: modelData
-                                onDeleted: projectController.delete_resource(modelData.id)
+                            Repeater {
+                                model: root.project.resources || []
+
+                                delegate: ResourceItem {
+                                    Layout.fillWidth: true
+                                    resource: modelData
+                                    onDeleted: {
+                                        root.itemToDeleteType = "resource"
+                                        root.itemToDeleteId = modelData.id
+                                        confirmDeleteDialog.open()
+                                    }
+                                }
                             }
                         }
 
@@ -356,28 +496,76 @@ ScrollView {
                         }
                     }
                 }
+
+                // Audit Trail Section
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: auditColumn.implicitHeight + 32
+                    radius: 10
+                    color: "#FFFFFF"
+                    border.color: "#E0E0E0"
+
+                    ColumnLayout {
+                        id: auditColumn
+                        anchors.fill: parent
+                        anchors.margins: 16
+                        spacing: 12
+
+                        Text {
+                            text: "Activity & Audit Log"
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: "#202124"
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+
+                            Repeater {
+                                model: projectController.auditLogs
+
+                                delegate: Rectangle {
+                                    Layout.fillWidth: true
+                                    implicitHeight: 36
+                                    radius: 4
+                                    color: "#F8F9FA"
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 10
+                                        spacing: 8
+
+                                        Text {
+                                            text: modelData.details
+                                            font.pixelSize: 11
+                                            color: "#202124"
+                                            Layout.fillWidth: true
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            text: modelData.timestamp
+                                            font.pixelSize: 10
+                                            color: "#70757A"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: "No recent activity recorded."
+                            font.pixelSize: 12
+                            color: "#70757A"
+                            visible: projectController.auditLogs.length === 0
+                        }
+                    }
+                }
             }
         }
 
         Item { implicitHeight: 20 }
-    }
-
-    // Delete confirmation dialog
-    Dialog {
-        id: confirmDeleteDialog
-        title: "Confirm Delete"
-        modal: true
-        standardButtons: Dialog.Yes | Dialog.No
-        anchors.centerIn: parent
-
-        Text {
-            text: "Are you sure you want to delete this project and all its tasks?"
-            font.pixelSize: 13
-        }
-
-        onAccepted: {
-            projectController.delete_project(root.project.id)
-            root.backClicked()
-        }
     }
 }

@@ -54,7 +54,7 @@ ScrollView {
                 title: "Total Projects"
                 value: (projectController.dashboardStats.total || 0).toString()
                 accentColor: "#1A73E8"
-                iconSymbol: "📂"
+                iconSource: "../../assets/projects.svg"
                 Layout.fillWidth: true
             }
 
@@ -62,7 +62,7 @@ ScrollView {
                 title: "Active Projects"
                 value: (projectController.dashboardStats.active || 0).toString()
                 accentColor: "#34A853"
-                iconSymbol: "🚀"
+                iconSource: "../../assets/play.svg"
                 Layout.fillWidth: true
             }
 
@@ -70,7 +70,7 @@ ScrollView {
                 title: "Paused Projects"
                 value: (projectController.dashboardStats.paused || 0).toString()
                 accentColor: "#FBBC04"
-                iconSymbol: "⏸️"
+                iconSource: "../../assets/pause.svg"
                 Layout.fillWidth: true
             }
 
@@ -78,7 +78,7 @@ ScrollView {
                 title: "Completed"
                 value: (projectController.dashboardStats.completed || 0).toString()
                 accentColor: "#174EA6"
-                iconSymbol: "✅"
+                iconSource: "../../assets/check-circle.svg"
                 Layout.fillWidth: true
             }
         }
@@ -174,9 +174,10 @@ ScrollView {
                                     anchors.rightMargin: 12
                                     spacing: 10
 
-                                    Text {
-                                        text: modelData.item_type === "project" ? "📂" : (modelData.item_type === "step" ? "📌" : "📦")
-                                        font.pixelSize: 16
+                                    Image {
+                                        source: modelData.item_type === "project" ? "../../assets/projects.svg" : (modelData.item_type === "step" ? "../../assets/edit.svg" : "../../assets/package.svg")
+                                        sourceSize.width: 18
+                                        sourceSize.height: 18
                                     }
 
                                     ColumnLayout {
@@ -202,16 +203,26 @@ ScrollView {
                                     Rectangle {
                                         radius: 4
                                         color: "#FCE8E6"
-                                        implicitWidth: deadlineTxt.implicitWidth + 12
+                                        implicitWidth: deadlineRow.implicitWidth + 12
                                         implicitHeight: 22
 
-                                        Text {
-                                            id: deadlineTxt
+                                        RowLayout {
+                                            id: deadlineRow
                                             anchors.centerIn: parent
-                                            text: "📅 " + modelData.deadline
-                                            font.pixelSize: 11
-                                            font.bold: true
-                                            color: "#C5221F"
+                                            spacing: 4
+
+                                            Image {
+                                                source: "../../assets/calendar.svg"
+                                                sourceSize.width: 12
+                                                sourceSize.height: 12
+                                            }
+
+                                            Text {
+                                                text: modelData.deadline
+                                                font.pixelSize: 11
+                                                font.bold: true
+                                                color: "#C5221F"
+                                            }
                                         }
                                     }
                                 }

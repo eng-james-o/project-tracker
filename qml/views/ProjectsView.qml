@@ -51,11 +51,22 @@ ScrollView {
                 anchors.rightMargin: 16
                 spacing: 16
 
-                CustomTextField {
-                    id: searchBox
-                    placeholderText: "🔍 Search projects or clients..."
+                RowLayout {
                     Layout.fillWidth: true
-                    onTextChanged: projectController.setSearchText(text)
+                    spacing: 8
+
+                    Image {
+                        source: "../../assets/search.svg"
+                        sourceSize.width: 18
+                        sourceSize.height: 18
+                    }
+
+                    CustomTextField {
+                        id: searchBox
+                        placeholderText: "Search projects or clients..."
+                        Layout.fillWidth: true
+                        onTextChanged: projectController.setSearchText(text)
+                    }
                 }
 
                 RowLayout {

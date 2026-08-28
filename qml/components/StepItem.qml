@@ -35,18 +35,33 @@ Rectangle {
             elide: Text.ElideRight
         }
 
-        Text {
-            text: root.step.deadline ? ("📅 " + root.step.deadline) : ""
-            font.pixelSize: 11
-            color: "#70757A"
+        RowLayout {
+            spacing: 4
             visible: root.step.deadline && root.step.deadline.length > 0
+
+            Image {
+                source: "../../assets/calendar.svg"
+                sourceSize.width: 12
+                sourceSize.height: 12
+            }
+
+            Text {
+                text: root.step.deadline || ""
+                font.pixelSize: 11
+                color: "#70757A"
+            }
         }
 
         Button {
-            text: "🗑️"
             flat: true
             implicitWidth: 30
             implicitHeight: 30
+            contentItem: Image {
+                anchors.centerIn: parent
+                source: "../../assets/trash.svg"
+                sourceSize.width: 16
+                sourceSize.height: 16
+            }
             onClicked: root.deleted()
         }
     }

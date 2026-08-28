@@ -68,10 +68,11 @@ ApplicationWindow {
                         implicitHeight: 36
                         radius: 8
                         color: "#1A73E8"
-                        Text {
+                        Image {
                             anchors.centerIn: parent
-                            text: "📊"
-                            font.pixelSize: 18
+                            source: "../assets/dashboard.svg"
+                            sourceSize.width: 20
+                            sourceSize.height: 20
                         }
                     }
                     Text {
@@ -89,14 +90,14 @@ ApplicationWindow {
 
                     CustomButton {
                         Layout.fillWidth: true
-                        text: "📊 Dashboard"
+                        text: "Dashboard"
                         variant: mainStack.currentIndex === 0 ? "primary" : "ghost"
                         onClicked: mainStack.currentIndex = 0
                     }
 
                     CustomButton {
                         Layout.fillWidth: true
-                        text: "📂 All Projects"
+                        text: "All Projects"
                         variant: mainStack.currentIndex === 1 ? "primary" : "ghost"
                         onClicked: mainStack.currentIndex = 1
                     }

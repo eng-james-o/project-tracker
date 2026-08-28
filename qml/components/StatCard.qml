@@ -6,7 +6,7 @@ Rectangle {
     property string title: ""
     property string value: "0"
     property string accentColor: "#1A73E8"
-    property string iconSymbol: "📊"
+    property string iconSource: ""
 
     implicitWidth: 180
     implicitHeight: 90
@@ -28,10 +28,12 @@ Rectangle {
             radius: 22
             color: Qt.alpha(root.accentColor, 0.12)
 
-            Text {
+            Image {
                 anchors.centerIn: parent
-                text: root.iconSymbol
-                font.pixelSize: 20
+                source: root.iconSource
+                sourceSize.width: 22
+                sourceSize.height: 22
+                visible: root.iconSource.length > 0
             }
         }
 

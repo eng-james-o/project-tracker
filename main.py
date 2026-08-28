@@ -2,9 +2,13 @@ import sys
 import os
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
+from PySide6.QtQuickControls2 import QQuickStyle
 from models.project_controller import ProjectController
 
 def main():
+    # Use Basic style to allow custom QML background/contentItem overrides on controls
+    QQuickStyle.setStyle("Basic")
+
     app = QGuiApplication(sys.argv)
     app.setOrganizationName("ProjectTracker")
     app.setApplicationName("ProjectTrackerDesktop")

@@ -48,18 +48,39 @@ Rectangle {
             Layout.fillWidth: true
             spacing: 12
 
-            Text {
-                text: "👤 " + (root.project.client_name || "No Client")
-                font.pixelSize: 12
-                color: "#5F6368"
+            RowLayout {
+                spacing: 6
                 Layout.fillWidth: true
-                elide: Text.ElideRight
+
+                Image {
+                    source: "../../assets/user.svg"
+                    sourceSize.width: 14
+                    sourceSize.height: 14
+                }
+
+                Text {
+                    text: root.project.client_name || "No Client"
+                    font.pixelSize: 12
+                    color: "#5F6368"
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                }
             }
 
-            Text {
-                text: "📅 " + (root.project.deadline || "No deadline")
-                font.pixelSize: 12
-                color: "#5F6368"
+            RowLayout {
+                spacing: 6
+
+                Image {
+                    source: "../../assets/calendar.svg"
+                    sourceSize.width: 14
+                    sourceSize.height: 14
+                }
+
+                Text {
+                    text: root.project.deadline || "No deadline"
+                    font.pixelSize: 12
+                    color: "#5F6368"
+                }
             }
         }
 
