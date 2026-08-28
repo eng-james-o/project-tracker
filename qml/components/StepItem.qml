@@ -6,6 +6,7 @@ Rectangle {
     id: root
     property var step: ({})
     signal toggled(bool completed)
+    signal editClicked()
     signal deleted()
 
     implicitHeight: 44
@@ -52,16 +53,15 @@ Rectangle {
             }
         }
 
-        Button {
-            flat: true
-            implicitWidth: 30
-            implicitHeight: 30
-            contentItem: Image {
-                anchors.centerIn: parent
-                source: "../../assets/trash.svg"
-                sourceSize.width: 16
-                sourceSize.height: 16
-            }
+        CustomButton {
+            variant: "icon"
+            iconSource: "../../assets/edit.svg"
+            onClicked: root.editClicked()
+        }
+
+        CustomButton {
+            variant: "icon"
+            iconSource: "../../assets/trash.svg"
             onClicked: root.deleted()
         }
     }

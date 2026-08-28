@@ -1,5 +1,6 @@
 from PySide6.QtCore import QObject, Signal, Slot, Property
 from db.database import DatabaseManager
+from db.audit_database import AuditDatabaseManager
 from typing import List, Dict, Any, Optional
 
 class ProjectController(QObject):
@@ -9,10 +10,13 @@ class ProjectController(QObject):
     dashboardStatsChanged = Signal()
     upcomingDeadlinesChanged = Signal()
     auditLogsChanged = Signal()
+    maxAuditRowsChanged = Signal()
 
-    def __init__(self, db_path: str = "project_tracker.db", parent=None):
+    def __init__(self, db_path: str = "project_tracker.db", audit_db_path: str = "audit_tracker.db", parent=None):
         super().__init__(parent)
-        self.db = DatabaseManager(db_path)
+        self.audit_db = AuditDatabaseManager(db_path=audit_db_path, max_rows=500)
+        self.db = DatabaseManager(db_path=db_path, audit_db_manager=self.audit_db)
+
         self._projects: List[Dict[str, Any]] = []
         self._selected_project: Dict[str, Any] = {}
         self._dashboard_stats: Dict[str, Any] = {}
@@ -49,7 +53,7 @@ class ProjectController(QObject):
     @Slot()
     def refresh_audit_logs(self):
         pid = self._selected_project.get('id') if self._selected_project else None
-        self._audit_logs = self.db.get_audit_logs(project_id=pid, limit=50)
+        self._audit_logs = self.audit_db.get_audit_logs(project_id=pid, limit=100)
         self.auditLogsChanged.emit()
 
     # --- Properties exposed to QML ---
@@ -72,6 +76,21 @@ class ProjectController(QObject):
     @Property(list, notify=auditLogsChanged)
     def auditLogs(self):
         return self._audit_logs
+
+    @Property(int, notify=maxAuditRowsChanged)
+    def maxAuditRows(self):
+        return self.audit_db.max_rows
+
+    @Slot(int)
+    def setMaxAuditRows(self, limit: int):
+        if limit > 0:
+            self.audit_db.set_max_rows(limit)
+            self.maxAuditRowsChanged.emit()
+
+    @Slot()
+    def clearAuditLogs(self):
+        self.audit_db.clear_audit_logs()
+        self.refresh_audit_logs()
 
     # --- Filtering and Search ---
     @Slot(str)
@@ -131,6 +150,12 @@ class ProjectController(QObject):
         self.refresh_all()
         return sid
 
+    @Slot(int, str, str, result=bool)
+    def update_step(self, step_id: int, title: str, deadline: str = "") -> bool:
+        res = self.db.update_step(step_id, title, deadline)
+        self.refresh_all()
+        return res
+
     @Slot(int, bool, result=bool)
     def toggle_step(self, step_id: int, completed: bool) -> bool:
         res = self.db.toggle_step_completion(step_id, completed)
@@ -152,6 +177,12 @@ class ProjectController(QObject):
         self.refresh_all()
         return did
 
+    @Slot(int, str, str, result=bool)
+    def update_deliverable(self, deliverable_id: int, title: str, deadline: str = "") -> bool:
+        res = self.db.update_deliverable(deliverable_id, title, deadline)
+        self.refresh_all()
+        return res
+
     @Slot(int, bool, result=bool)
     def toggle_deliverable(self, deliverable_id: int, completed: bool) -> bool:
         res = self.db.toggle_deliverable_completion(deliverable_id, completed)
@@ -170,6 +201,12 @@ class ProjectController(QObject):
         rid = self.db.add_resource(project_id, res_type, title, path_or_content)
         self.refresh_all()
         return rid
+
+    @Slot(int, str, str, str, result=bool)
+    def update_resource(self, resource_id: int, res_type: str, title: str, path_or_content: str) -> bool:
+        res = self.db.update_resource(resource_id, res_type, title, path_or_content)
+        self.refresh_all()
+        return res
 
     @Slot(int, result=bool)
     def delete_resource(self, resource_id: int) -> bool:

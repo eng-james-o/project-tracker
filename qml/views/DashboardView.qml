@@ -18,7 +18,7 @@ ScrollView {
 
         Item { implicitHeight: 10 } // Spacer
 
-        // Header
+        // Header (No quick project button as requested)
         RowLayout {
             Layout.fillWidth: true
 
@@ -38,11 +38,6 @@ ScrollView {
             }
 
             Item { Layout.fillWidth: true }
-
-            CustomButton {
-                text: "+ Quick Project"
-                onClicked: projectDialog.open()
-            }
         }
 
         // Stat Cards Row

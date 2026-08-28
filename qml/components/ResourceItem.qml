@@ -5,7 +5,7 @@ import QtQuick.Controls
 Rectangle {
     id: root
     property var resource: ({})
-    signal openClicked()
+    signal editClicked()
     signal deleted()
 
     implicitHeight: resource.type === "note" ? 80 : 50
@@ -76,16 +76,15 @@ Rectangle {
             onClicked: Qt.openUrlExternally(root.resource.path_or_content)
         }
 
-        Button {
-            flat: true
-            implicitWidth: 30
-            implicitHeight: 30
-            contentItem: Image {
-                anchors.centerIn: parent
-                source: "../../assets/trash.svg"
-                sourceSize.width: 16
-                sourceSize.height: 16
-            }
+        CustomButton {
+            variant: "icon"
+            iconSource: "../../assets/edit.svg"
+            onClicked: root.editClicked()
+        }
+
+        CustomButton {
+            variant: "icon"
+            iconSource: "../../assets/trash.svg"
             onClicked: root.deleted()
         }
     }

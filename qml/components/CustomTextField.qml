@@ -13,6 +13,7 @@ TextField {
     selectByMouse: true
     font.pixelSize: 13
     color: "#202124"
+    placeholderTextColor: "#70757A" // High contrast visible placeholder
 
     background: Item {
         anchors.fill: parent

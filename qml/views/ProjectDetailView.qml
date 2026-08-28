@@ -9,11 +9,100 @@ ScrollView {
     clip: true
 
     signal backClicked()
+    signal navigateToAuditView()
 
     property var project: projectController.selectedProject
 
     property int itemToDeleteId: 0
-    property string itemToDeleteType: "" // "step", "deliverable", "resource", "project"
+    property string itemToDeleteType: ""
+
+    // Editing State
+    property int editItemId: 0
+    property string editItemType: "" // "step", "deliverable", "resource"
+
+    // Edit Item Dialog
+    Dialog {
+        id: editItemDialog
+        title: "Edit " + (root.editItemType === "step" ? "Step" : (root.editItemType === "deliverable" ? "Deliverable" : "Resource"))
+        modal: true
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        anchors.centerIn: parent
+        width: 380
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 12
+
+            CustomTextField {
+                id: editTitleInput
+                label: "Title *"
+                Layout.fillWidth: true
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                visible: root.editItemType !== "resource"
+
+                CustomTextField {
+                    id: editDeadlineInput
+                    label: "Deadline"
+                    placeholderText: "YYYY-MM-DD"
+                    Layout.fillWidth: true
+                }
+
+                Button {
+                    flat: true
+                    implicitWidth: 34
+                    implicitHeight: 34
+                    Layout.alignment: Qt.AlignBottom
+                    contentItem: Image {
+                        anchors.centerIn: parent
+                        source: "../../assets/calendar.svg"
+                        sourceSize.width: 16
+                        sourceSize.height: 16
+                    }
+                    onClicked: editDatePicker.open()
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                visible: root.editItemType === "resource"
+
+                ComboBox {
+                    id: editResTypeCombo
+                    model: ["link", "document", "folder", "note"]
+                    Layout.fillWidth: true
+                }
+
+                CustomTextField {
+                    id: editResPathInput
+                    label: "Path or Content"
+                    Layout.fillWidth: true
+                }
+            }
+        }
+
+        onAccepted: {
+            if (root.editItemType === "step") {
+                projectController.update_step(root.editItemId, editTitleInput.text, editDeadlineInput.text)
+            } else if (root.editItemType === "deliverable") {
+                projectController.update_deliverable(root.editItemId, editTitleInput.text, editDeadlineInput.text)
+            } else if (root.editItemType === "resource") {
+                projectController.update_resource(root.editItemId, editResTypeCombo.currentText, editTitleInput.text, editResPathInput.text)
+            }
+        }
+    }
+
+    DatePickerDialog {
+        id: editDatePicker
+        anchors.centerIn: parent
+        onDateSelected: function(selectedDate) {
+            editDeadlineInput.text = selectedDate
+        }
+    }
 
     DatePickerDialog {
         id: stepDatePicker
@@ -286,6 +375,13 @@ ScrollView {
                                 Layout.fillWidth: true
                                 step: modelData
                                 onToggled: function(completed) { projectController.toggle_step(modelData.id, completed) }
+                                onEditClicked: {
+                                    root.editItemType = "step"
+                                    root.editItemId = modelData.id
+                                    editTitleInput.text = modelData.title || ""
+                                    editDeadlineInput.text = modelData.deadline || ""
+                                    editItemDialog.open()
+                                }
                                 onDeleted: {
                                     root.itemToDeleteType = "step"
                                     root.itemToDeleteId = modelData.id
@@ -378,6 +474,13 @@ ScrollView {
                                 Layout.fillWidth: true
                                 deliverable: modelData
                                 onToggled: function(completed) { projectController.toggle_deliverable(modelData.id, completed) }
+                                onEditClicked: {
+                                    root.editItemType = "deliverable"
+                                    root.editItemId = modelData.id
+                                    editTitleInput.text = modelData.title || ""
+                                    editDeadlineInput.text = modelData.deadline || ""
+                                    editItemDialog.open()
+                                }
                                 onDeleted: {
                                     root.itemToDeleteType = "deliverable"
                                     root.itemToDeleteId = modelData.id
@@ -396,7 +499,7 @@ ScrollView {
                 }
             }
 
-            // Right Column: Resources & Audit Trail
+            // Right Column: Resources & Audit Trail (Top 6 entries)
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 45
@@ -479,6 +582,13 @@ ScrollView {
                                 delegate: ResourceItem {
                                     Layout.fillWidth: true
                                     resource: modelData
+                                    onEditClicked: {
+                                        root.editItemType = "resource"
+                                        root.editItemId = modelData.id
+                                        editTitleInput.text = modelData.title || ""
+                                        editResPathInput.text = modelData.path_or_content || ""
+                                        editItemDialog.open()
+                                    }
                                     onDeleted: {
                                         root.itemToDeleteType = "resource"
                                         root.itemToDeleteId = modelData.id
@@ -497,7 +607,7 @@ ScrollView {
                     }
                 }
 
-                // Audit Trail Section
+                // Audit Trail Section (Top 6 entries limit + Link to Full View)
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: auditColumn.implicitHeight + 32
@@ -511,11 +621,22 @@ ScrollView {
                         anchors.margins: 16
                         spacing: 12
 
-                        Text {
-                            text: "Activity & Audit Log"
-                            font.pixelSize: 16
-                            font.bold: true
-                            color: "#202124"
+                        RowLayout {
+                            Layout.fillWidth: true
+
+                            Text {
+                                text: "Recent Activity (Top 6)"
+                                font.pixelSize: 16
+                                font.bold: true
+                                color: "#202124"
+                                Layout.fillWidth: true
+                            }
+
+                            Button {
+                                text: "View All Activity ->"
+                                flat: true
+                                onClicked: root.navigateToAuditView()
+                            }
                         }
 
                         ColumnLayout {
@@ -523,7 +644,7 @@ ScrollView {
                             spacing: 6
 
                             Repeater {
-                                model: projectController.auditLogs
+                                model: (root.project.audit_logs || []).slice(0, 6)
 
                                 delegate: Rectangle {
                                     Layout.fillWidth: true
@@ -538,7 +659,7 @@ ScrollView {
                                         spacing: 8
 
                                         Text {
-                                            text: modelData.details
+                                            text: modelData.details + (modelData.repeat_count > 1 ? (" (x" + modelData.repeat_count + ")") : "")
                                             font.pixelSize: 11
                                             color: "#202124"
                                             Layout.fillWidth: true
@@ -559,7 +680,7 @@ ScrollView {
                             text: "No recent activity recorded."
                             font.pixelSize: 12
                             color: "#70757A"
-                            visible: projectController.auditLogs.length === 0
+                            visible: !(root.project.audit_logs && root.project.audit_logs.length > 0)
                         }
                     }
                 }

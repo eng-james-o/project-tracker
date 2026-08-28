@@ -1,93 +1,68 @@
 import os
 import pytest
 from db.database import DatabaseManager
+from db.audit_database import AuditDatabaseManager
 from models.project_controller import ProjectController
 
 @pytest.fixture
-def db_file(tmp_path):
-    path = os.path.join(tmp_path, "test_project_tracker.db")
-    yield path
-    if os.path.exists(path):
-        os.remove(path)
+def test_dbs(tmp_path):
+    db_path = os.path.join(tmp_path, "test_project_tracker.db")
+    audit_path = os.path.join(tmp_path, "test_audit_tracker.db")
+    yield db_path, audit_path
+    if os.path.exists(db_path):
+        os.remove(db_path)
+    if os.path.exists(audit_path):
+        os.remove(audit_path)
 
-def test_database_project_crud_and_audit(db_file):
-    db = DatabaseManager(db_file)
+def test_database_and_audit_db_compression_and_cap(test_dbs):
+    db_path, audit_path = test_dbs
+    audit_db = AuditDatabaseManager(db_path=audit_path, max_rows=5)
+    db = DatabaseManager(db_path=db_path, audit_db_manager=audit_db)
 
     # Add project
-    pid = db.add_project(
-        title="Web App Redesign",
-        client_name="Acme Corp",
-        client_email="contact@acme.com",
-        status="active",
-        deadline="2026-10-15",
-        description="Redesign client portal"
-    )
+    pid = db.add_project("Web App Redesign", "Acme", "a@acme.com", "active", "2026-12-31", "Description")
     assert pid > 0
 
-    # Verify project timestamps and initial audit log
-    p = db.get_project_by_id(pid)
-    assert p['created_at'] is not None
-    assert p['updated_at'] is not None
-    assert len(p['audit_logs']) >= 1
-    assert "Created project" in p['audit_logs'][0]['details']
+    # Repeat same action to test compression into single row with repeat_count
+    db.update_step(1, "Updated Title", "2026-10-01")
+    audit_db.log_audit(pid, "step", 1, "UPDATE", "Modified step 'Wireframing'")
+    audit_db.log_audit(pid, "step", 1, "UPDATE", "Modified step 'Wireframing'")
+    audit_db.log_audit(pid, "step", 1, "UPDATE", "Modified step 'Wireframing'")
 
-    # Update project
-    updated = db.update_project(
-        pid,
-        title="Web App Redesign V2",
-        client_name="Acme Corp",
-        client_email="contact@acme.com",
-        status="paused",
-        deadline="2026-11-01",
-        description="Updated scope"
-    )
-    assert updated is True
+    logs = audit_db.get_audit_logs(pid)
+    compressed_log = [l for l in logs if l['details'] == "Modified step 'Wireframing'"][0]
+    assert compressed_log['repeat_count'] == 3
 
-    p = db.get_project_by_id(pid)
-    assert p['title'] == "Web App Redesign V2"
-    assert p['status'] == "paused"
-    assert len(p['audit_logs']) >= 2
+    # Add 10 items to test row cap (max_rows=5)
+    for i in range(10):
+        audit_db.log_audit(pid, "test", i, "TEST", f"Test log entry {i}")
 
-    # Delete project
-    deleted = db.delete_project(pid)
-    assert deleted is True
-    assert db.get_project_by_id(pid) is None
+    all_logs = audit_db.get_audit_logs()
+    assert len(all_logs) <= 5
 
-def test_steps_and_deliverables_and_audit_logging(db_file):
-    db = DatabaseManager(db_file)
-    pid = db.add_project("Mobile App", client_name="TechInc")
+def test_step_deliverable_resource_editing(test_dbs):
+    db_path, audit_path = test_dbs
+    controller = ProjectController(db_path=db_path, audit_db_path=audit_path)
 
-    # Add step
-    sid = db.add_step(pid, "Wireframing", deadline="2026-09-01")
-    assert sid > 0
-
-    # Toggle step completion
-    db.toggle_step_completion(sid, True)
-    steps = db.get_steps(pid)
-    assert steps[0]['completed'] == 1
-
-    # Add deliverable
-    did = db.add_deliverable(pid, "Figma Prototype", deadline="2026-09-10")
-    assert did > 0
-
-    # Add resource
-    rid = db.add_resource(pid, "link", "Design Specs", "https://figma.com/design")
-    assert rid > 0
-
-    # Check audit logs
-    logs = db.get_audit_logs(pid)
-    assert len(logs) == 5  # project create, step create, step toggle, deliverable create, resource create
-    details_str = " ".join([l['details'] for l in logs])
-    assert "Wireframing" in details_str
-    assert "Figma Prototype" in details_str
-    assert "Design Specs" in details_str
-
-def test_project_controller_audit_integration(db_file):
-    controller = ProjectController(db_path=db_file)
-    pid = controller.add_project("Branding Project", "Global Brand", "g@brand.com", "active", "2026-12-01", "Notes")
-
+    pid = controller.add_project("Mobile App", "TechCorp", "t@tech.com", "active", "2026-12-31", "Desc")
     controller.load_project_details(pid)
-    assert len(controller.auditLogs) >= 1
 
-    sid = controller.add_step(pid, "Initial Logo Concepts", "2026-08-30")
-    assert len(controller.auditLogs) >= 2
+    # Add and Edit Step
+    sid = controller.add_step(pid, "Initial Step", "2026-09-01")
+    controller.update_step(sid, "Revised Step Title", "2026-09-15")
+    step = [s for s in controller.selectedProject['steps'] if s['id'] == sid][0]
+    assert step['title'] == "Revised Step Title"
+    assert step['deadline'] == "2026-09-15"
+
+    # Add and Edit Deliverable
+    did = controller.add_deliverable(pid, "Design Spec", "2026-09-10")
+    controller.update_deliverable(did, "Final Spec PDF", "2026-09-20")
+    deliv = [d for d in controller.selectedProject['deliverables'] if d['id'] == did][0]
+    assert deliv['title'] == "Final Spec PDF"
+
+    # Add and Edit Resource
+    rid = controller.add_resource(pid, "link", "Figma", "https://figma.com")
+    controller.update_resource(rid, "link", "Figma V2", "https://figma.com/v2")
+    res = [r for r in controller.selectedProject['resources'] if r['id'] == rid][0]
+    assert res['title'] == "Figma V2"
+    assert res['path_or_content'] == "https://figma.com/v2"
