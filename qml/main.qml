@@ -144,7 +144,7 @@ ApplicationWindow {
                 // Quick Add Project Button
                 CustomButton {
                     Layout.fillWidth: true
-                    text: mainWindow.isSidebarCollapsed ? "" : "+ New Project"
+                    text: mainWindow.isSidebarCollapsed ? "" : "New Project"
                     iconSource: mainWindow.isSidebarCollapsed ? "../assets/plus.svg" : ""
                     variant: "secondary"
                     onClicked: {

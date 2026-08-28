@@ -328,7 +328,7 @@ ScrollView {
 
                             CustomTextField {
                                 id: newStepTitle
-                                placeholderText: "Step title..."
+                                placeholderText: "Step title (e.g., Wireframing, API Design)..."
                                 Layout.fillWidth: true
                             }
 
@@ -427,7 +427,7 @@ ScrollView {
 
                             CustomTextField {
                                 id: newDelivTitle
-                                placeholderText: "Deliverable title..."
+                                placeholderText: "Deliverable title (e.g., Final Prototype PDF)..."
                                 Layout.fillWidth: true
                             }
 
@@ -543,7 +543,7 @@ ScrollView {
 
                                 CustomTextField {
                                     id: resTitleInput
-                                    placeholderText: "Resource Title..."
+                                    placeholderText: "Resource Title (e.g., Design Brief)..."
                                     Layout.fillWidth: true
                                 }
                             }
