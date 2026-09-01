@@ -6,7 +6,7 @@ Button {
     property string variant: "primary" // "primary", "secondary", "danger", "ghost", "icon"
     property string iconSource: ""
 
-    implicitWidth: variant === "icon" ? 34 : Math.max(90, buttonContent.implicitWidth + 28)
+    implicitWidth: variant === "icon" ? 34 : (control.text.length === 0 ? buttonContent.implicitWidth + 20 : Math.max(90, buttonContent.implicitWidth + 28))
     implicitHeight: 36
 
     hoverEnabled: true

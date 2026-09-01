@@ -1,13 +1,68 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../"
 
 Dialog {
     id: root
     title: isEdit ? "Edit Project" : "New Project"
     modal: true
-    standardButtons: Dialog.Ok | Dialog.Cancel
     width: 480
+    
+    header: Rectangle {
+        color: Style.background
+        implicitHeight: 60
+        radius: Style.radiusLarge
+        
+        // This hides the rounding at the bottom by drawing a rectangle over it
+        Rectangle {
+            anchors.bottom: parent.bottom
+            width: parent.width
+            height: Style.radiusLarge
+            color: Style.background
+        }
+        
+        Text {
+            anchors.centerIn: parent
+            text: root.title
+            font.pixelSize: 18
+            font.bold: true
+            color: Style.textMain
+        }
+        
+        Rectangle {
+            anchors.bottom: parent.bottom
+            width: parent.width
+            height: 1
+            color: Style.border
+        }
+    }
+
+    background: Rectangle {
+        color: Style.surface
+        radius: Style.radiusLarge
+        border.color: Style.border
+    }
+
+    footer: Rectangle {
+        implicitHeight: 68
+        color: "transparent"
+        RowLayout {
+            anchors.fill: parent
+            anchors.margins: 16
+            Item { Layout.fillWidth: true }
+            CustomButton {
+                text: "Cancel"
+                variant: "ghost"
+                onClicked: root.reject()
+            }
+            CustomButton {
+                text: "Save"
+                variant: "primary"
+                onClicked: root.accept()
+            }
+        }
+    }
 
     property bool isEdit: false
     property int projectId: 0
@@ -123,7 +178,7 @@ Dialog {
                     color: "#5F6368"
                 }
 
-                ComboBox {
+                CustomComboBox {
                     id: statusCombo
                     Layout.fillWidth: true
                     model: ["Active", "Paused", "Completed"]
@@ -149,9 +204,9 @@ Dialog {
                 placeholderText: "Add key requirements, scope details, or client preferences..."
                 wrapMode: TextArea.Wrap
                 background: Rectangle {
-                    radius: 6
-                    color: "#F8F9FA"
-                    border.color: descInput.activeFocus ? "#1A73E8" : "#DADCE0"
+                    radius: Style.radiusMedium
+                    color: Style.background
+                    border.color: descInput.activeFocus ? Style.primary : Style.border
                 }
             }
         }

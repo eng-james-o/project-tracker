@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../components"
+import "../"
 
 ScrollView {
     id: root
@@ -46,10 +47,51 @@ ScrollView {
                 spacing: 16
 
                 Text {
+                    text: "Appearance"
+                    font.pixelSize: 16
+                    font.bold: true
+                    color: Style.textMain
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 16
+
+                    ColumnLayout {
+                        spacing: 4
+                        Layout.fillWidth: true
+
+                        Text {
+                            text: "Dark Mode"
+                            font.pixelSize: 13
+                            font.weight: Font.Medium
+                            color: Style.textMain
+                        }
+
+                        Text {
+                            text: "Toggle between light and dark theme."
+                            font.pixelSize: 11
+                            color: Style.textLight
+                        }
+                    }
+
+                    Switch {
+                        checked: Style.isDarkMode
+                        onCheckedChanged: Style.isDarkMode = checked
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: Style.border
+                }
+
+                Text {
                     text: "Audit Database Configuration"
                     font.pixelSize: 16
                     font.bold: true
-                    color: "#202124"
+                    color: Style.textMain
                 }
 
                 RowLayout {
@@ -80,7 +122,61 @@ ScrollView {
                         to: 10000
                         stepSize: 50
                         value: projectController.maxAuditRows
-                        onValueChanged: projectController.setMaxAuditRows(value)
+                        onValueModified: projectController.setMaxAuditRows(value)
+
+                        contentItem: TextInput {
+                            z: 2
+                            text: maxRowsSpinBox.textFromValue(maxRowsSpinBox.value, maxRowsSpinBox.locale)
+                            font: maxRowsSpinBox.font
+                            color: Style.textMain
+                            selectionColor: Style.primary
+                            selectedTextColor: Style.surface
+                            horizontalAlignment: Qt.AlignHCenter
+                            verticalAlignment: Qt.AlignVCenter
+                            readOnly: !maxRowsSpinBox.editable
+                            validator: maxRowsSpinBox.validator
+                            inputMethodHints: Qt.ImhFormattedNumbersOnly
+                        }
+
+                        up.indicator: Rectangle {
+                            x: maxRowsSpinBox.mirrored ? 0 : parent.width - width
+                            height: parent.height
+                            implicitWidth: 36
+                            implicitHeight: 36
+                            color: maxRowsSpinBox.up.pressed ? Style.secondaryPressed : Style.secondary
+                            border.color: Style.border
+                            radius: Style.radiusMedium
+
+                            Text {
+                                text: "+"
+                                font.pixelSize: 16
+                                color: Style.textMain
+                                anchors.centerIn: parent
+                            }
+                        }
+
+                        down.indicator: Rectangle {
+                            x: maxRowsSpinBox.mirrored ? parent.width - width : 0
+                            height: parent.height
+                            implicitWidth: 36
+                            implicitHeight: 36
+                            color: maxRowsSpinBox.down.pressed ? Style.secondaryPressed : Style.secondary
+                            border.color: Style.border
+                            radius: Style.radiusMedium
+
+                            Text {
+                                text: "-"
+                                font.pixelSize: 16
+                                color: Style.textMain
+                                anchors.centerIn: parent
+                            }
+                        }
+
+                        background: Rectangle {
+                            implicitWidth: 140
+                            border.color: Style.border
+                            radius: Style.radiusMedium
+                        }
                     }
                 }
 

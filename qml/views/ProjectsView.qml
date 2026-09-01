@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../components"
+import "../"
 
 ScrollView {
     id: root
@@ -78,7 +79,8 @@ ScrollView {
                         color: "#5F6368"
                     }
 
-                    ComboBox {
+                    CustomComboBox {
+                        id: control
                         model: ["All", "Active", "Paused", "Completed"]
                         onCurrentTextChanged: projectController.setStatusFilter(currentText)
                     }

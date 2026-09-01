@@ -76,6 +76,7 @@ ApplicationWindow {
                         implicitHeight: 36
                         radius: 8
                         color: "#1A73E8"
+                        visible: !mainWindow.isSidebarCollapsed
                         Image {
                             anchors.centerIn: parent
                             source: "../assets/app-icon.svg"
@@ -96,7 +97,7 @@ ApplicationWindow {
 
                     CustomButton {
                         variant: "icon"
-                        iconSource: "../assets/sidebar.svg"
+                        iconSource: "../../assets/sidebar.svg"
                         onClicked: mainWindow.isSidebarCollapsed = !mainWindow.isSidebarCollapsed
                     }
                 }
@@ -109,33 +110,45 @@ ApplicationWindow {
                     CustomButton {
                         Layout.fillWidth: true
                         text: mainWindow.isSidebarCollapsed ? "" : "Dashboard"
-                        iconSource: "../assets/dashboard.svg"
+                        iconSource: "../../assets/dashboard.svg"
                         variant: mainStack.currentIndex === 0 ? "primary" : "ghost"
                         onClicked: mainStack.currentIndex = 0
+                        ToolTip.text: "Dashboard"
+                        ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
+                        ToolTip.delay: 300
                     }
 
                     CustomButton {
                         Layout.fillWidth: true
                         text: mainWindow.isSidebarCollapsed ? "" : "All Projects"
-                        iconSource: "../assets/projects.svg"
+                        iconSource: "../../assets/projects.svg"
                         variant: mainStack.currentIndex === 1 ? "primary" : "ghost"
                         onClicked: mainStack.currentIndex = 1
+                        ToolTip.text: "All Projects"
+                        ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
+                        ToolTip.delay: 300
                     }
 
                     CustomButton {
                         Layout.fillWidth: true
                         text: mainWindow.isSidebarCollapsed ? "" : "Activity & Audit"
-                        iconSource: "../assets/audit.svg"
+                        iconSource: "../../assets/audit.svg"
                         variant: mainStack.currentIndex === 3 ? "primary" : "ghost"
                         onClicked: mainStack.currentIndex = 3
+                        ToolTip.text: "Activity & Audit"
+                        ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
+                        ToolTip.delay: 300
                     }
 
                     CustomButton {
                         Layout.fillWidth: true
                         text: mainWindow.isSidebarCollapsed ? "" : "Settings"
-                        iconSource: "../assets/settings.svg"
+                        iconSource: "../../assets/settings.svg"
                         variant: mainStack.currentIndex === 4 ? "primary" : "ghost"
                         onClicked: mainStack.currentIndex = 4
+                        ToolTip.text: "Settings"
+                        ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
+                        ToolTip.delay: 300
                     }
                 }
 
@@ -145,8 +158,11 @@ ApplicationWindow {
                 CustomButton {
                     Layout.fillWidth: true
                     text: mainWindow.isSidebarCollapsed ? "" : "New Project"
-                    iconSource: mainWindow.isSidebarCollapsed ? "../assets/plus.svg" : ""
+                    iconSource: "../../assets/plus.svg"
                     variant: "secondary"
+                    ToolTip.text: "New Project"
+                    ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
+                    ToolTip.delay: 300
                     onClicked: {
                         projectDialog.setProject(null)
                         projectDialog.open()
