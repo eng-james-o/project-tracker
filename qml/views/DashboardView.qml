@@ -78,6 +78,44 @@ ScrollView {
             }
         }
 
+        // Financial Stats Row
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 16
+
+            StatCard {
+                title: "Total Revenue"
+                value: projectController.get_financial_stats().total_revenue ? "$" + projectController.get_financial_stats().total_revenue.toFixed(2) : "$0.00"
+                accentColor: "#34A853"
+                iconSource: "../../assets/dollar.svg"
+                Layout.fillWidth: true
+            }
+
+            StatCard {
+                title: "Total Paid"
+                value: projectController.get_financial_stats().total_paid ? "$" + projectController.get_financial_stats().total_paid.toFixed(2) : "$0.00"
+                accentColor: "#1A73E8"
+                iconSource: "../../assets/payment.svg"
+                Layout.fillWidth: true
+            }
+
+            StatCard {
+                title: "Outstanding"
+                value: projectController.get_financial_stats().total_outstanding ? "$" + projectController.get_financial_stats().total_outstanding.toFixed(2) : "$0.00"
+                accentColor: projectController.get_financial_stats().total_outstanding > 0 ? "#EA4335" : "#34A853"
+                iconSource: "../../assets/outstanding.svg"
+                Layout.fillWidth: true
+            }
+
+            StatCard {
+                title: "Goals Completed"
+                value: projectController.goals.filter(function(g) { return g.status === "completed" }).length.toString()
+                accentColor: "#174EA6"
+                iconSource: "../../assets/goals.svg"
+                Layout.fillWidth: true
+            }
+        }
+
         // Two Column Content Section
         RowLayout {
             Layout.fillWidth: true
