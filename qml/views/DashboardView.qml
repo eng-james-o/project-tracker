@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../components"
+import "../"
 
 ScrollView {
     id: root
@@ -28,12 +29,12 @@ ScrollView {
                     text: "Dashboard Overview"
                     font.pixelSize: 24
                     font.bold: true
-                    color: "#202124"
+                    color: Style.textMain
                 }
                 Text {
                     text: "Track active projects, recent deliverables, and upcoming deadlines"
                     font.pixelSize: 13
-                    color: "#5F6368"
+                    color: Style.textSecondary
                 }
             }
 
@@ -48,7 +49,7 @@ ScrollView {
             StatCard {
                 title: "Total Projects"
                 value: (projectController.dashboardStats.total || 0).toString()
-                accentColor: "#1A73E8"
+                accentColor: Style.primary
                 iconSource: "../../assets/projects.svg"
                 Layout.fillWidth: true
             }
@@ -56,7 +57,7 @@ ScrollView {
             StatCard {
                 title: "Active Projects"
                 value: (projectController.dashboardStats.active || 0).toString()
-                accentColor: "#34A853"
+                accentColor: Style.success
                 iconSource: "../../assets/play.svg"
                 Layout.fillWidth: true
             }
@@ -64,7 +65,7 @@ ScrollView {
             StatCard {
                 title: "Paused Projects"
                 value: (projectController.dashboardStats.paused || 0).toString()
-                accentColor: "#FBBC04"
+                accentColor: Style.warning
                 iconSource: "../../assets/pause.svg"
                 Layout.fillWidth: true
             }
@@ -72,7 +73,7 @@ ScrollView {
             StatCard {
                 title: "Completed"
                 value: (projectController.dashboardStats.completed || 0).toString()
-                accentColor: "#174EA6"
+                accentColor: Style.info
                 iconSource: "../../assets/check-circle.svg"
                 Layout.fillWidth: true
             }
@@ -96,7 +97,7 @@ ScrollView {
                         text: "Active Projects"
                         font.pixelSize: 18
                         font.bold: true
-                        color: "#202124"
+                        color: Style.textMain
                     }
                     Item { Layout.fillWidth: true }
                     Button {
@@ -122,7 +123,7 @@ ScrollView {
                 Text {
                     text: "No active projects currently."
                     font.pixelSize: 13
-                    color: "#70757A"
+                    color: Style.textLight
                     visible: projectController.projects.filter(function(p){ return p.status === 'active'; }).length === 0
                 }
             }
@@ -133,19 +134,23 @@ ScrollView {
                 Layout.preferredWidth: 40
                 spacing: 12
 
-                Text {
-                    text: "Upcoming Deadlines"
-                    font.pixelSize: 18
-                    font.bold: true
-                    color: "#202124"
+                RowLayout {
+                    Layout.fillWidth: true
+                    Text {
+                        text: "Upcoming Deadlines"
+                        font.pixelSize: 18
+                        font.bold: true
+                        color: Style.textMain
+                    }
+                    Item { Layout.fillWidth: true }
                 }
 
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: deadlineList.implicitHeight + 20
-                    radius: 10
-                    color: "#FFFFFF"
-                    border.color: "#E0E0E0"
+                    radius: Style.radiusLarge
+                    color: Style.surface
+                    border.color: Style.border
                     border.width: 1
 
                     ColumnLayout {
@@ -160,8 +165,8 @@ ScrollView {
                             delegate: Rectangle {
                                 Layout.fillWidth: true
                                 implicitHeight: 50
-                                radius: 6
-                                color: "#F8F9FA"
+                                radius: Style.radiusMedium
+                                color: Style.background
 
                                 RowLayout {
                                     anchors.fill: parent
@@ -183,22 +188,22 @@ ScrollView {
                                             text: modelData.item_title
                                             font.pixelSize: 13
                                             font.bold: true
-                                            color: "#202124"
+                                            color: Style.textMain
                                             elide: Text.ElideRight
                                         }
 
                                         Text {
                                             text: modelData.project_title + " (" + modelData.item_type + ")"
                                             font.pixelSize: 11
-                                            color: "#5F6368"
+                                            color: Style.textSecondary
                                             elide: Text.ElideRight
                                         }
                                     }
 
                                     Rectangle {
-                                        radius: 4
+                                        radius: Style.radiusSmall
                                         color: "#FCE8E6"
-                                        implicitWidth: deadlineRow.implicitWidth + 12
+                                        implicitWidth: Math.min(deadlineRow.implicitWidth + 12, 120)
                                         implicitHeight: 22
 
                                         RowLayout {
@@ -216,7 +221,9 @@ ScrollView {
                                                 text: modelData.deadline
                                                 font.pixelSize: 11
                                                 font.bold: true
-                                                color: "#C5221F"
+                                                color: Style.danger
+                                                elide: Text.ElideRight
+                                                maximumLineCount: 1
                                             }
                                         }
                                     }
@@ -236,7 +243,7 @@ ScrollView {
                         Text {
                             text: "No upcoming deadlines."
                             font.pixelSize: 13
-                            color: "#70757A"
+                            color: Style.textLight
                             visible: projectController.upcomingDeadlines.length === 0
                         }
                     }

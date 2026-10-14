@@ -24,6 +24,23 @@ QtObject {
     property color dangerHover: isDarkMode ? "#F6AEA9" : "#D93025"
     property color dangerPressed: isDarkMode ? "#EE675C" : "#B31412"
 
+    property color success: isDarkMode ? "#81C995" : "#34A853"
+    property color warning: isDarkMode ? "#FDD663" : "#FBBC04"
+    property color info: isDarkMode ? "#8AB4F8" : "#174EA6"
+
+    // Status-specific colors
+    property color statusActiveBg: isDarkMode ? "#1E5E31" : "#E6F4EA"
+    property color statusActiveText: isDarkMode ? "#81C995" : "#137333"
+    property color statusActiveBorder: isDarkMode ? "#81C995" : "#34A853"
+
+    property color statusPausedBg: isDarkMode ? "#735600" : "#FEF7E0"
+    property color statusPausedText: isDarkMode ? "#FDD663" : "#B06000"
+    property color statusPausedBorder: isDarkMode ? "#FDD663" : "#FBBC04"
+
+    property color statusCompletedBg: isDarkMode ? "#174EA6" : "#E8F0FE"
+    property color statusCompletedText: isDarkMode ? "#8AB4F8" : "#174EA6"
+    property color statusCompletedBorder: isDarkMode ? "#8AB4F8" : "#1A73E8"
+
     property color ghostHover: isDarkMode ? "#3C4043" : "#F1F3F4"
     property color ghostPressed: isDarkMode ? "#5F6368" : "#E8EAED"
 

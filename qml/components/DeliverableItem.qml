@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import "../"
 
 Rectangle {
     id: root
@@ -10,9 +11,9 @@ Rectangle {
     signal deleted()
 
     implicitHeight: 44
-    radius: 6
-    color: "#F8F9FA"
-    border.color: "#E0E0E0"
+    radius: Style.radiusMedium
+    color: Style.background
+    border.color: Style.border
     border.width: 1
 
     RowLayout {
@@ -21,7 +22,7 @@ Rectangle {
         anchors.rightMargin: 12
         spacing: 10
 
-        CheckBox {
+        CustomCheckBox {
             id: chk
             checked: root.deliverable.completed || false
             onToggled: root.toggled(chk.checked)
@@ -38,7 +39,7 @@ Rectangle {
             font.pixelSize: 13
             font.bold: true
             font.strikeout: root.deliverable.completed
-            color: root.deliverable.completed ? "#80868B" : "#202124"
+            color: root.deliverable.completed ? Style.textLight : Style.textMain
             Layout.fillWidth: true
             elide: Text.ElideRight
         }
@@ -56,7 +57,7 @@ Rectangle {
             Text {
                 text: root.deliverable.deadline || ""
                 font.pixelSize: 11
-                color: "#D93025"
+                color: Style.danger
             }
         }
 

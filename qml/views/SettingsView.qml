@@ -23,12 +23,12 @@ ScrollView {
                 text: "Application Settings"
                 font.pixelSize: 24
                 font.bold: true
-                color: "#202124"
+                color: Style.textMain
             }
             Text {
                 text: "Configure audit trail row limits and application preferences"
                 font.pixelSize: 13
-                color: "#5F6368"
+                color: Style.textSecondary
             }
         }
 
@@ -36,9 +36,9 @@ ScrollView {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: settingsCol.implicitHeight + 32
-            radius: 10
-            color: "#FFFFFF"
-            border.color: "#E0E0E0"
+            radius: Style.radiusLarge
+            color: Style.surface
+            border.color: Style.border
 
             ColumnLayout {
                 id: settingsCol
@@ -106,13 +106,13 @@ ScrollView {
                             text: "Max Audit Log Rows Cap"
                             font.pixelSize: 13
                             font.weight: Font.Medium
-                            color: "#202124"
+                            color: Style.textMain
                         }
 
                         Text {
                             text: "Prevents database bloat by automatically purging oldest entries when threshold is reached."
                             font.pixelSize: 11
-                            color: "#70757A"
+                            color: Style.textLight
                         }
                     }
 
@@ -183,7 +183,7 @@ ScrollView {
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
-                    color: "#E0E0E0"
+                    color: Style.border
                 }
 
                 RowLayout {
@@ -197,13 +197,13 @@ ScrollView {
                             text: "Database Management"
                             font.pixelSize: 13
                             font.weight: Font.Medium
-                            color: "#202124"
+                            color: Style.textMain
                         }
 
                         Text {
                             text: "Clear stored audit log history from audit_tracker.db."
                             font.pixelSize: 11
-                            color: "#70757A"
+                            color: Style.textLight
                         }
                     }
 

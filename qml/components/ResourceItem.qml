@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import "../"
 
 Rectangle {
     id: root
@@ -8,10 +9,10 @@ Rectangle {
     signal editClicked()
     signal deleted()
 
-    implicitHeight: resource.type === "note" ? 80 : 50
-    radius: 6
-    color: "#FFFFFF"
-    border.color: "#E0E0E0"
+    implicitHeight: resource.type === "note" ? Math.max(80, (markdownPreview.visible ? markdownPreview.implicitHeight : 80) + 20) : 50
+    radius: Style.radiusMedium
+    color: Style.surface
+    border.color: Style.border
     border.width: 1
 
     function getIconSource(type) {
@@ -33,7 +34,7 @@ Rectangle {
             implicitWidth: 32
             implicitHeight: 32
             radius: 16
-            color: "#F1F3F4"
+            color: Style.secondary
 
             Image {
                 anchors.centerIn: parent
@@ -51,19 +52,27 @@ Rectangle {
                 text: root.resource.title || "Untitled Resource"
                 font.pixelSize: 13
                 font.bold: true
-                color: "#202124"
+                color: Style.textMain
                 Layout.fillWidth: true
                 elide: Text.ElideRight
+            }
+
+            MarkdownText {
+                id: markdownPreview
+                markdownText: root.resource.path_or_content || ""
+                Layout.fillWidth: true
+                visible: root.resource.type === "note"
             }
 
             Text {
                 text: root.resource.path_or_content || ""
                 font.pixelSize: 11
-                color: "#5F6368"
+                color: Style.textSecondary
                 Layout.fillWidth: true
                 elide: Text.ElideRight
-                maximumLineCount: root.resource.type === "note" ? 2 : 1
+                maximumLineCount: 1
                 wrapMode: Text.Wrap
+                visible: root.resource.type !== "note"
             }
         }
 
@@ -74,6 +83,20 @@ Rectangle {
             implicitHeight: 28
             visible: root.resource.type !== "note"
             onClicked: Qt.openUrlExternally(root.resource.path_or_content)
+        }
+
+        CustomButton {
+            variant: "icon"
+            iconSource: "../../assets/link.svg"
+            visible: root.resource.type === "link"
+            ToolTip.text: "Copy Link"
+            ToolTip.visible: hovered
+            onClicked: {
+                // Copy link to clipboard
+                var text = root.resource.path_or_content
+                console.log("Copy link to clipboard:", text)
+                // Note: Actual clipboard integration requires Qt.Clipboard or backend support
+            }
         }
 
         CustomButton {

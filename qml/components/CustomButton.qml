@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import "../"
 
 Button {
     id: control
@@ -12,41 +13,41 @@ Button {
     hoverEnabled: true
 
     background: Rectangle {
-        radius: 6
+        radius: Style.radiusMedium
         color: {
-            if (!control.enabled) return "#E0E0E0"
+            if (!control.enabled) return Style.border
             if (control.pressed) {
                 switch(variant) {
-                    case "primary": return "#1557B0"
-                    case "secondary": return "#D0D0D0"
-                    case "danger": return "#B31412"
-                    case "ghost": return "#E8EAED"
-                    case "icon": return "#D2E3FC"
-                    default: return "#1557B0"
+                    case "primary": return Style.primaryPressed
+                    case "secondary": return Style.secondaryPressed
+                    case "danger": return Style.dangerPressed
+                    case "ghost": return Style.ghostPressed
+                    case "icon": return Style.iconPressed
+                    default: return Style.primaryPressed
                 }
             }
             if (control.hovered) {
                 switch(variant) {
-                    case "primary": return "#1765CC"
-                    case "secondary": return "#E2E4E7"
-                    case "danger": return "#D93025"
-                    case "ghost": return "#F1F3F4"
-                    case "icon": return "#E8F0FE" // Visual hover feedback for icon buttons
-                    default: return "#1765CC"
+                    case "primary": return Style.primaryHover
+                    case "secondary": return Style.secondaryHover
+                    case "danger": return Style.dangerHover
+                    case "ghost": return Style.ghostHover
+                    case "icon": return Style.iconHover
+                    default: return Style.primaryHover
                 }
             }
             switch(variant) {
-                case "primary": return "#1A73E8"
-                case "secondary": return "#F1F3F4"
-                case "danger": return "#EA4335"
+                case "primary": return Style.primary
+                case "secondary": return Style.secondary
+                case "danger": return Style.danger
                 case "ghost": return "transparent"
                 case "icon": return "transparent"
-                default: return "#1A73E8"
+                default: return Style.primary
             }
         }
         border.color: {
-            if (control.hovered && variant === "icon") return "#1A73E8"
-            return variant === "secondary" ? "#DADCE0" : "transparent"
+            if (control.hovered && variant === "icon") return Style.primary
+            return variant === "secondary" ? Style.secondaryBorder : "transparent"
         }
         border.width: (variant === "secondary" || (control.hovered && variant === "icon")) ? 1 : 0
     }
@@ -70,14 +71,14 @@ Button {
             font.pixelSize: 13
             font.bold: true
             color: {
-                if (!control.enabled) return "#9AA0A6"
+                if (!control.enabled) return Style.textLight
                 switch(variant) {
-                    case "primary": return "#FFFFFF"
-                    case "secondary": return "#3C4043"
-                    case "danger": return "#FFFFFF"
-                    case "ghost": return "#1A73E8"
-                    case "icon": return "#1A73E8"
-                    default: return "#FFFFFF"
+                    case "primary": return Style.surface
+                    case "secondary": return Style.textMain
+                    case "danger": return Style.surface
+                    case "ghost": return Style.primary
+                    case "icon": return Style.primary
+                    default: return Style.surface
                 }
             }
             anchors.verticalCenter: parent.verticalCenter

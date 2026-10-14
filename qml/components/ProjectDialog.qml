@@ -175,7 +175,7 @@ Dialog {
                     text: "Status"
                     font.pixelSize: 12
                     font.weight: Font.Medium
-                    color: "#5F6368"
+                    color: Style.textSecondary
                 }
 
                 CustomComboBox {
@@ -194,7 +194,7 @@ Dialog {
                 text: "Description / Notes"
                 font.pixelSize: 12
                 font.weight: Font.Medium
-                color: "#5F6368"
+                color: Style.textSecondary
             }
 
             TextArea {
@@ -203,6 +203,10 @@ Dialog {
                 implicitHeight: 80
                 placeholderText: "Add key requirements, scope details, or client preferences..."
                 wrapMode: TextArea.Wrap
+                color: Style.textMain
+                selectionColor: Style.primaryHover
+                selectedTextColor: Style.surface
+                placeholderTextColor: Style.textSecondary
                 background: Rectangle {
                     radius: Style.radiusMedium
                     color: Style.background

@@ -1,19 +1,20 @@
 import QtQuick
 import QtQuick.Layouts
+import "../"
 
 Rectangle {
     id: root
     property string title: ""
     property string value: "0"
-    property string accentColor: "#1A73E8"
+    property string accentColor: Style.primary
     property string iconSource: ""
 
     implicitWidth: 180
     implicitHeight: 90
-    radius: 10
-    color: "#FFFFFF"
+    radius: Style.radiusLarge
+    color: Style.surface
 
-    border.color: "#E0E0E0"
+    border.color: Style.border
     border.width: 1
 
     RowLayout {
@@ -43,7 +44,7 @@ Rectangle {
             Text {
                 text: root.title
                 font.pixelSize: 12
-                color: "#70757A"
+                color: Style.textLight
                 font.weight: Font.Medium
             }
 
@@ -51,7 +52,7 @@ Rectangle {
                 text: root.value
                 font.pixelSize: 22
                 font.bold: true
-                color: "#202124"
+                color: Style.textMain
             }
         }
     }

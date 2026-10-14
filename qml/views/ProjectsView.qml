@@ -26,7 +26,7 @@ ScrollView {
                 text: "Projects Overview"
                 font.pixelSize: 24
                 font.bold: true
-                color: "#202124"
+                color: Style.textMain
             }
 
             Item { Layout.fillWidth: true }
@@ -41,9 +41,9 @@ ScrollView {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: 60
-            radius: 8
-            color: "#FFFFFF"
-            border.color: "#E0E0E0"
+            radius: Style.radiusMedium
+            color: Style.surface
+            border.color: Style.border
             border.width: 1
 
             RowLayout {
@@ -76,7 +76,7 @@ ScrollView {
                     Text {
                         text: "Status:"
                         font.pixelSize: 13
-                        color: "#5F6368"
+                        color: Style.textSecondary
                     }
 
                     CustomComboBox {
@@ -112,7 +112,7 @@ ScrollView {
         Text {
             text: "No projects match your search/filter criteria."
             font.pixelSize: 14
-            color: "#70757A"
+            color: Style.textLight
             Layout.alignment: Qt.AlignHCenter
             visible: projectController.projects.length === 0
         }

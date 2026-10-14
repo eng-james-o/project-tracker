@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import "components"
 import "views"
+import "."
 
 ApplicationWindow {
     id: mainWindow
@@ -10,7 +11,7 @@ ApplicationWindow {
     width: 1100
     height: 750
     title: "Project Tracker Desktop"
-    color: "#F8F9FA"
+    color: Style.background
 
     property bool isSidebarCollapsed: false
 
@@ -50,8 +51,8 @@ ApplicationWindow {
         Rectangle {
             Layout.fillHeight: true
             implicitWidth: mainWindow.isSidebarCollapsed ? 64 : 220
-            color: "#FFFFFF"
-            border.color: "#E0E0E0"
+            color: Style.surface
+            border.color: Style.border
             border.width: 1
 
             Behavior on implicitWidth {
@@ -74,8 +75,8 @@ ApplicationWindow {
                     Rectangle {
                         implicitWidth: 36
                         implicitHeight: 36
-                        radius: 8
-                        color: "#1A73E8"
+                        radius: Style.radiusMedium
+                        color: Style.primary
                         visible: !mainWindow.isSidebarCollapsed
                         Image {
                             anchors.centerIn: parent
@@ -89,7 +90,7 @@ ApplicationWindow {
                         text: "ProjectTracker"
                         font.pixelSize: 17
                         font.bold: true
-                        color: "#202124"
+                        color: Style.textMain
                         visible: !mainWindow.isSidebarCollapsed
                         Layout.fillWidth: true
                         elide: Text.ElideRight

@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import "../"
 
 TextField {
     id: control
@@ -12,8 +13,10 @@ TextField {
     rightPadding: 10
     selectByMouse: true
     font.pixelSize: 13
-    color: "#202124"
-    placeholderTextColor: "#70757A" // High contrast visible placeholder
+    color: Style.textMain
+    placeholderTextColor: Style.textSecondary
+    selectionColor: Style.primaryHover
+    selectedTextColor: Style.surface
 
     background: Item {
         anchors.fill: parent
@@ -25,7 +28,7 @@ TextField {
             visible: control.label.length > 0
             font.pixelSize: 11
             font.weight: Font.Medium
-            color: "#5F6368"
+            color: Style.textSecondary
         }
 
         Rectangle {
@@ -33,9 +36,9 @@ TextField {
             anchors.left: parent.left
             anchors.right: parent.right
             height: 38
-            radius: 6
-            color: "#F8F9FA"
-            border.color: control.activeFocus ? "#1A73E8" : "#DADCE0"
+            radius: Style.radiusMedium
+            color: Style.background
+            border.color: control.activeFocus ? Style.primary : Style.border
             border.width: control.activeFocus ? 2 : 1
         }
     }

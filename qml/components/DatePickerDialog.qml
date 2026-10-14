@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../"
 
 Dialog {
     id: root
@@ -58,7 +59,7 @@ Dialog {
                 text: Qt.formatDate(new Date(root.currentYear, root.currentMonth - 1, 1), "MMMM yyyy")
                 font.pixelSize: 14
                 font.bold: true
-                color: "#202124"
+                color: Style.textMain
                 horizontalAlignment: Text.AlignHCenter
                 Layout.fillWidth: true
             }
@@ -88,7 +89,7 @@ Dialog {
                     text: modelData
                     font.pixelSize: 11
                     font.bold: true
-                    color: "#70757A"
+                    color: Style.textLight
                     horizontalAlignment: Text.AlignHCenter
                     Layout.fillWidth: true
                 }
@@ -118,14 +119,14 @@ Dialog {
                     Layout.fillWidth: true
                     implicitHeight: 30
                     radius: 15
-                    color: dayNum === root.selectedDay ? "#1A73E8" : (mouseArea.containsMouse ? "#E8F0FE" : "transparent")
+                    color: dayNum === root.selectedDay ? Style.primary : (mouseArea.containsMouse ? Style.iconHover : "transparent")
 
                     Text {
                         anchors.centerIn: parent
                         text: dayNum.toString()
                         font.pixelSize: 12
                         font.bold: dayNum === root.selectedDay
-                        color: dayNum === root.selectedDay ? "#FFFFFF" : "#202124"
+                        color: dayNum === root.selectedDay ? Style.surface : Style.textMain
                     }
 
                     MouseArea {

@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../components"
+import "../"
 
 ScrollView {
     id: root
@@ -25,12 +26,12 @@ ScrollView {
                     text: "Activity & Audit Logs"
                     font.pixelSize: 24
                     font.bold: true
-                    color: "#202124"
+                    color: Style.textMain
                 }
                 Text {
                     text: "Complete auditability trail of system activities and changes"
                     font.pixelSize: 13
-                    color: "#5F6368"
+                    color: Style.textSecondary
                 }
             }
 
@@ -47,9 +48,9 @@ ScrollView {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: logsColumn.implicitHeight + 32
-            radius: 10
-            color: "#FFFFFF"
-            border.color: "#E0E0E0"
+            radius: Style.radiusLarge
+            color: Style.surface
+            border.color: Style.border
 
             ColumnLayout {
                 id: logsColumn
@@ -63,8 +64,8 @@ ScrollView {
                     delegate: Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: 44
-                        radius: 6
-                        color: "#F8F9FA"
+                        radius: Style.radiusMedium
+                        color: Style.background
 
                         RowLayout {
                             anchors.fill: parent
@@ -94,21 +95,21 @@ ScrollView {
                                     text: modelData.details + (modelData.repeat_count > 1 ? (" (x" + modelData.repeat_count + ")") : "")
                                     font.pixelSize: 13
                                     font.bold: true
-                                    color: "#202124"
+                                    color: Style.textMain
                                     elide: Text.ElideRight
                                 }
 
                                 Text {
                                     text: "Action: " + modelData.action + " | Entity: " + modelData.entity_type
                                     font.pixelSize: 11
-                                    color: "#70757A"
+                                    color: Style.textLight
                                 }
                             }
 
                             Text {
                                 text: modelData.timestamp
                                 font.pixelSize: 11
-                                color: "#5F6368"
+                                color: Style.textSecondary
                             }
                         }
                     }

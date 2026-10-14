@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../components"
+import "../"
 
 ScrollView {
     id: root
@@ -28,6 +29,12 @@ ScrollView {
         standardButtons: Dialog.Ok | Dialog.Cancel
         anchors.centerIn: parent
         width: 380
+
+        background: Rectangle {
+            color: Style.surface
+            radius: Style.radiusLarge
+            border.color: Style.border
+        }
 
         ColumnLayout {
             anchors.fill: parent
@@ -71,7 +78,7 @@ ScrollView {
                 spacing: 8
                 visible: root.editItemType === "resource"
 
-                ComboBox {
+                CustomComboBox {
                     id: editResTypeCombo
                     model: ["link", "document", "folder", "note"]
                     Layout.fillWidth: true
@@ -80,7 +87,39 @@ ScrollView {
                 CustomTextField {
                     id: editResPathInput
                     label: "Path or Content"
+                    placeholderText: editResTypeCombo.currentText === "note" ? "Type note content here..." : "URL or file path..."
                     Layout.fillWidth: true
+                    visible: editResTypeCombo.currentText !== "note"
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+                    visible: editResTypeCombo.currentText === "note"
+
+                    Text {
+                        text: "Note Content"
+                        font.pixelSize: 12
+                        font.weight: Font.Medium
+                        color: Style.textSecondary
+                    }
+
+                    TextArea {
+                        id: editResNoteInput
+                        Layout.fillWidth: true
+                        implicitHeight: 80
+                        placeholderText: "Type note content here..."
+                        wrapMode: TextArea.Wrap
+                        color: Style.textMain
+                        placeholderTextColor: Style.textSecondary
+                        selectionColor: Style.primaryHover
+                        selectedTextColor: Style.surface
+                        background: Rectangle {
+                            radius: Style.radiusMedium
+                            color: Style.background
+                            border.color: editResNoteInput.activeFocus ? Style.primary : Style.border
+                        }
+                    }
                 }
             }
         }
@@ -91,7 +130,8 @@ ScrollView {
             } else if (root.editItemType === "deliverable") {
                 projectController.update_deliverable(root.editItemId, editTitleInput.text, editDeadlineInput.text)
             } else if (root.editItemType === "resource") {
-                projectController.update_resource(root.editItemId, editResTypeCombo.currentText, editTitleInput.text, editResPathInput.text)
+                var pathContent = editResTypeCombo.currentText === "note" ? editResNoteInput.text : editResPathInput.text
+                projectController.update_resource(root.editItemId, editResTypeCombo.currentText, editTitleInput.text, pathContent)
             }
         }
     }
@@ -201,9 +241,9 @@ ScrollView {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: headerLayout.implicitHeight + 32
-            radius: 10
-            color: "#FFFFFF"
-            border.color: "#E0E0E0"
+            radius: Style.radiusLarge
+            color: Style.surface
+            border.color: Style.border
 
             ColumnLayout {
                 id: headerLayout
@@ -218,7 +258,7 @@ ScrollView {
                         text: root.project.title || "Untitled Project"
                         font.pixelSize: 22
                         font.bold: true
-                        color: "#202124"
+                        color: Style.textMain
                         Layout.fillWidth: true
                     }
 
@@ -241,7 +281,7 @@ ScrollView {
                         Text {
                             text: "Client: " + (root.project.client_name || "N/A") + (root.project.client_email ? (" (" + root.project.client_email + ")") : "")
                             font.pixelSize: 13
-                            color: "#5F6368"
+                            color: Style.textSecondary
                         }
                     }
 
@@ -256,7 +296,7 @@ ScrollView {
                             text: "Deadline: " + (root.project.deadline || "None")
                             font.pixelSize: 13
                             font.bold: true
-                            color: root.project.deadline ? "#C5221F" : "#5F6368"
+                            color: root.project.deadline ? Style.danger : Style.textSecondary
                         }
                     }
                 }
@@ -268,21 +308,18 @@ ScrollView {
                     Text {
                         text: "Created: " + (root.project.created_at || "N/A")
                         font.pixelSize: 11
-                        color: "#70757A"
+                        color: Style.textLight
                     }
 
                     Text {
                         text: "Last Updated: " + (root.project.updated_at || "N/A")
                         font.pixelSize: 11
-                        color: "#70757A"
+                        color: Style.textLight
                     }
                 }
 
-                Text {
-                    text: root.project.description || "No description provided."
-                    font.pixelSize: 13
-                    color: "#3C4043"
-                    wrapMode: Text.Wrap
+                MarkdownText {
+                    markdownText: root.project.description || "No description provided."
                     Layout.fillWidth: true
                 }
             }
@@ -299,14 +336,15 @@ ScrollView {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 55
                 spacing: 20
+                Layout.alignment: Qt.AlignTop
 
                 // Steps Section
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: stepsColumn.implicitHeight + 32
-                    radius: 10
-                    color: "#FFFFFF"
-                    border.color: "#E0E0E0"
+                    radius: Style.radiusLarge
+                    color: Style.surface
+                    border.color: Style.border
 
                     ColumnLayout {
                         id: stepsColumn
@@ -318,7 +356,7 @@ ScrollView {
                             text: "Project Steps / Tasks"
                             font.pixelSize: 16
                             font.bold: true
-                            color: "#202124"
+                            color: Style.textMain
                         }
 
                         // Add Step Input Box
@@ -393,7 +431,7 @@ ScrollView {
                         Text {
                             text: "No steps added yet."
                             font.pixelSize: 12
-                            color: "#70757A"
+                            color: Style.textLight
                             visible: !(root.project.steps && root.project.steps.length > 0)
                         }
                     }
@@ -403,9 +441,9 @@ ScrollView {
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: delivColumn.implicitHeight + 32
-                    radius: 10
-                    color: "#FFFFFF"
-                    border.color: "#E0E0E0"
+                    radius: Style.radiusLarge
+                    color: Style.surface
+                    border.color: Style.border
 
                     ColumnLayout {
                         id: delivColumn
@@ -417,7 +455,7 @@ ScrollView {
                             text: "Project Deliverables"
                             font.pixelSize: 16
                             font.bold: true
-                            color: "#202124"
+                            color: Style.textMain
                         }
 
                         // Add Deliverable Input Box
@@ -492,7 +530,7 @@ ScrollView {
                         Text {
                             text: "No deliverables added yet."
                             font.pixelSize: 12
-                            color: "#70757A"
+                            color: Style.textLight
                             visible: !(root.project.deliverables && root.project.deliverables.length > 0)
                         }
                     }
@@ -504,14 +542,15 @@ ScrollView {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 45
                 spacing: 20
+                Layout.alignment: Qt.AlignTop
 
                 // Resources Section
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: resColumn.implicitHeight + 32
-                    radius: 10
-                    color: "#FFFFFF"
-                    border.color: "#E0E0E0"
+                    radius: Style.radiusLarge
+                    color: Style.surface
+                    border.color: Style.border
 
                     ColumnLayout {
                         id: resColumn
@@ -523,7 +562,7 @@ ScrollView {
                             text: "Resources & Notes"
                             font.pixelSize: 16
                             font.bold: true
-                            color: "#202124"
+                            color: Style.textMain
                         }
 
                         // Add Resource Form
@@ -535,7 +574,7 @@ ScrollView {
                                 Layout.fillWidth: true
                                 spacing: 8
 
-                                ComboBox {
+                                CustomComboBox {
                                     id: resTypeCombo
                                     model: ["link", "document", "folder", "note"]
                                     implicitWidth: 110
@@ -556,15 +595,59 @@ ScrollView {
                                     id: resPathInput
                                     placeholderText: resTypeCombo.currentText === "note" ? "Type note content here..." : "URL or Folder/File Path..."
                                     Layout.fillWidth: true
+                                    visible: resTypeCombo.currentText !== "note"
                                 }
 
                                 CustomButton {
                                     text: "Attach"
+                                    visible: resTypeCombo.currentText !== "note"
                                     onClicked: {
                                         if (resTitleInput.text.trim().length > 0 && resPathInput.text.trim().length > 0) {
                                             projectController.add_resource(root.project.id, resTypeCombo.currentText, resTitleInput.text, resPathInput.text)
                                             resTitleInput.text = ""
                                             resPathInput.text = ""
+                                        }
+                                    }
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 4
+                                visible: resTypeCombo.currentText === "note"
+
+                                Text {
+                                    text: "Note Content"
+                                    font.pixelSize: 12
+                                    font.weight: Font.Medium
+                                    color: Style.textSecondary
+                                }
+
+                                TextArea {
+                                    id: resNoteInput
+                                    Layout.fillWidth: true
+                                    implicitHeight: 80
+                                    placeholderText: "Type note content here..."
+                                    wrapMode: TextArea.Wrap
+                                    color: Style.textMain
+                                    placeholderTextColor: Style.textSecondary
+                                    selectionColor: Style.primaryHover
+                                    selectedTextColor: Style.surface
+                                    background: Rectangle {
+                                        radius: Style.radiusMedium
+                                        color: Style.background
+                                        border.color: resNoteInput.activeFocus ? Style.primary : Style.border
+                                    }
+                                }
+
+                                CustomButton {
+                                    text: "Attach Note"
+                                    Layout.alignment: Qt.AlignRight
+                                    onClicked: {
+                                        if (resTitleInput.text.trim().length > 0 && resNoteInput.text.trim().length > 0) {
+                                            projectController.add_resource(root.project.id, resTypeCombo.currentText, resTitleInput.text, resNoteInput.text)
+                                            resTitleInput.text = ""
+                                            resNoteInput.text = ""
                                         }
                                     }
                                 }
@@ -587,6 +670,12 @@ ScrollView {
                                         root.editItemId = modelData.id
                                         editTitleInput.text = modelData.title || ""
                                         editResPathInput.text = modelData.path_or_content || ""
+                                        editResNoteInput.text = modelData.path_or_content || ""
+                                        // Set the combo box to match the resource type
+                                        var typeIndex = ["link", "document", "folder", "note"].indexOf(modelData.type || "link")
+                                        if (typeIndex >= 0) {
+                                            editResTypeCombo.currentIndex = typeIndex
+                                        }
                                         editItemDialog.open()
                                     }
                                     onDeleted: {
@@ -601,7 +690,7 @@ ScrollView {
                         Text {
                             text: "No resources attached yet."
                             font.pixelSize: 12
-                            color: "#70757A"
+                            color: Style.textLight
                             visible: !(root.project.resources && root.project.resources.length > 0)
                         }
                     }
@@ -611,9 +700,9 @@ ScrollView {
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: auditColumn.implicitHeight + 32
-                    radius: 10
-                    color: "#FFFFFF"
-                    border.color: "#E0E0E0"
+                    radius: Style.radiusLarge
+                    color: Style.surface
+                    border.color: Style.border
 
                     ColumnLayout {
                         id: auditColumn
@@ -628,7 +717,7 @@ ScrollView {
                                 text: "Recent Activity (Top 6)"
                                 font.pixelSize: 16
                                 font.bold: true
-                                color: "#202124"
+                                color: Style.textMain
                                 Layout.fillWidth: true
                             }
 
@@ -649,8 +738,8 @@ ScrollView {
                                 delegate: Rectangle {
                                     Layout.fillWidth: true
                                     implicitHeight: 36
-                                    radius: 4
-                                    color: "#F8F9FA"
+                                    radius: Style.radiusSmall
+                                    color: Style.background
 
                                     RowLayout {
                                         anchors.fill: parent
@@ -661,7 +750,7 @@ ScrollView {
                                         Text {
                                             text: modelData.details + (modelData.repeat_count > 1 ? (" (x" + modelData.repeat_count + ")") : "")
                                             font.pixelSize: 11
-                                            color: "#202124"
+                                            color: Style.textMain
                                             Layout.fillWidth: true
                                             elide: Text.ElideRight
                                         }
@@ -669,7 +758,7 @@ ScrollView {
                                         Text {
                                             text: modelData.timestamp
                                             font.pixelSize: 10
-                                            color: "#70757A"
+                                            color: Style.textLight
                                         }
                                     }
                                 }

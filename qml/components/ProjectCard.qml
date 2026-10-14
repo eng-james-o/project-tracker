@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import "../"
 
 Rectangle {
     id: root
@@ -9,9 +10,9 @@ Rectangle {
     signal statusChanged(string newStatus)
 
     implicitHeight: 180
-    radius: 10
-    color: "#FFFFFF"
-    border.color: mouseArea.containsMouse ? "#1A73E8" : "#E0E0E0"
+    radius: Style.radiusLarge
+    color: Style.surface
+    border.color: mouseArea.containsMouse ? Style.primary : Style.border
     border.width: mouseArea.containsMouse ? 2 : 1
 
     MouseArea {
@@ -34,7 +35,7 @@ Rectangle {
                 text: root.project.title || "Untitled Project"
                 font.pixelSize: 16
                 font.bold: true
-                color: "#202124"
+                color: Style.textMain
                 Layout.fillWidth: true
                 elide: Text.ElideRight
             }
@@ -61,7 +62,7 @@ Rectangle {
                 Text {
                     text: (root.project.client_name || "No Client") + (root.project.client_email ? (" (" + root.project.client_email + ")") : "")
                     font.pixelSize: 12
-                    color: "#5F6368"
+                    color: Style.textSecondary
                     Layout.fillWidth: true
                     elide: Text.ElideRight
                 }
@@ -79,7 +80,7 @@ Rectangle {
                 Text {
                     text: root.project.deadline || "No deadline"
                     font.pixelSize: 12
-                    color: "#5F6368"
+                    color: Style.textSecondary
                 }
             }
         }
@@ -87,7 +88,7 @@ Rectangle {
         Text {
             text: root.project.description || "No description."
             font.pixelSize: 12
-            color: "#70757A"
+            color: Style.textLight
             elide: Text.ElideRight
             maximumLineCount: 1
             Layout.fillWidth: true
@@ -102,7 +103,7 @@ Rectangle {
                 property int total: root.project.steps_total || 0
                 text: "Steps: " + done + "/" + total
                 font.pixelSize: 11
-                color: "#5F6368"
+                color: Style.textSecondary
             }
 
             Text {
@@ -110,7 +111,7 @@ Rectangle {
                 property int total: root.project.deliverables_total || 0
                 text: "Deliverables: " + done + "/" + total
                 font.pixelSize: 11
-                color: "#5F6368"
+                color: Style.textSecondary
             }
         }
 
@@ -118,16 +119,16 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             height: 6
-            radius: 3
-            color: "#E8EAED"
+            radius: Style.radiusSmall
+            color: Style.secondaryBorder
 
             Rectangle {
                 property int done: root.project.steps_completed || 0
                 property int total: root.project.steps_total || 0
                 width: total > 0 ? parent.width * (done / total) : 0
                 height: parent.height
-                radius: 3
-                color: root.project.status === "completed" ? "#34A853" : "#1A73E8"
+                radius: Style.radiusSmall
+                color: root.project.status === "completed" ? Style.success : Style.primary
             }
         }
     }

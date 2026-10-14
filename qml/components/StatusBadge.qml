@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import "../"
 
 Rectangle {
     id: root
@@ -11,19 +12,19 @@ Rectangle {
 
     color: {
         switch(status.toLowerCase()) {
-            case "active": return "#E6F4EA" // soft green
-            case "paused": return "#FEF7E0" // soft yellow/amber
-            case "completed": return "#E8F0FE" // soft blue
-            default: return "#F1F3F4"
+            case "active": return Style.statusActiveBg
+            case "paused": return Style.statusPausedBg
+            case "completed": return Style.statusCompletedBg
+            default: return Style.secondary
         }
     }
 
     border.color: {
         switch(status.toLowerCase()) {
-            case "active": return "#34A853"
-            case "paused": return "#FBBC04"
-            case "completed": return "#1A73E8"
-            default: return "#9AA0A6"
+            case "active": return Style.statusActiveBorder
+            case "paused": return Style.statusPausedBorder
+            case "completed": return Style.statusCompletedBorder
+            default: return Style.textLight
         }
     }
     border.width: 1
@@ -36,10 +37,10 @@ Rectangle {
         font.bold: true
         color: {
             switch(root.status.toLowerCase()) {
-                case "active": return "#137333"
-                case "paused": return "#B06000"
-                case "completed": return "#174EA6"
-                default: return "#5F6368"
+                case "active": return Style.statusActiveText
+                case "paused": return Style.statusPausedText
+                case "completed": return Style.statusCompletedText
+                default: return Style.textSecondary
             }
         }
     }
