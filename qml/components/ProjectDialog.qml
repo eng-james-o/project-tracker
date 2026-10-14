@@ -76,7 +76,7 @@ Dialog {
     property alias paidAmount: paidInput.text
     property alias currency: currencyCombo.currentText
     property alias tags: tagsInput.text
-    property alias companyId: companyCombo.currentIndex > 0 ? companyCombo.currentValue : -1
+    property int companyId: companyCombo.currentIndex > 0 ? companyCombo.currentValue : -1
     property alias isPersonal: personalCheck.checked
     property string status: statusCombo.currentText.toLowerCase()
 

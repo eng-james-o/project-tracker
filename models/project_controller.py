@@ -1,4 +1,4 @@
-from PySide6.QtCore import QObject, Signal, Slot, Property, QVariant
+from PySide6.QtCore import QObject, Signal, Slot, Property
 from db.database import DatabaseManager
 from db.audit_database import AuditDatabaseManager
 from typing import List, Dict, Any, Optional

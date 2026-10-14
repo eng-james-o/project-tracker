@@ -22,7 +22,6 @@ Rectangle {
             case "document": return "../../assets/file-text.svg"
             case "folder": return "../../assets/projects.svg"
             case "note": return "../../assets/edit.svg"
-            case "markdown": return "../../assets/markdown.svg"
             default: return "../../assets/file-text.svg"
         }
     }

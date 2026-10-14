@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../"
+import "."
 
 Dialog {
     id: root
@@ -28,7 +29,7 @@ Dialog {
         if (isEditing) {
             var changed = false
             if (titleInput.text !== (resource.title || "")) changed = true
-            if (typeCombo.currentText !== (resource.type || "note")) changed = true
+            if (typeCombo.model[typeCombo.currentIndex] !== (resource.type || "note")) changed = true
             if (contentInput.text !== (resource.path_or_content || "")) changed = true
             root.hasUnsavedChanges = changed
         }
@@ -118,12 +119,11 @@ Dialog {
             Rectangle {
                 radius: 4
                 color: {
-                    switch(resource.type || typeCombo.currentText) {
+                    switch(resource.type || typeCombo.model[typeCombo.currentIndex]) {
                         case "link": return "#E8F0FE"
                         case "document": return "#E8F5E8"
                         case "folder": return "#FFF176"
                         case "note": return "#F3E5F5"
-                        case "markdown": return "#E0F2F1"
                         default: return "#E0E0E0"
                     }
                 }
@@ -131,16 +131,15 @@ Dialog {
                 implicitHeight: 24
 
                 Text {
-                    text: resource.type || typeCombo.currentText
+                    text: resource.type || typeCombo.model[typeCombo.currentIndex]
                     font.pixelSize: 11
                     font.bold: true
                     color: {
-                        switch(resource.type || typeCombo.currentText) {
+                        switch(resource.type || typeCombo.model[typeCombo.currentIndex]) {
                             case "link": return "#1A73E8"
                             case "document": return "#2E7D32"
                             case "folder": return "#F57F17"
                             case "note": return "#7B1FA2"
-                            case "markdown": return "#006064"
                             default: return "#202124"
                         }
                     }
@@ -165,9 +164,12 @@ Dialog {
             CustomComboBox {
                 id: typeCombo
                 Layout.fillWidth: true
-                model: ["note", "markdown", "link", "document", "folder"]
-                currentText: resource.type || "note"
-                onCurrentTextChanged: checkUnsavedChanges()
+                model: ["note", "link", "document", "folder"]
+                currentIndex: {
+                    var idx = model.indexOf(resource.type || "note")
+                    return idx >= 0 ? idx : 0
+                }
+                onCurrentIndexChanged: checkUnsavedChanges()
             }
         }
 
@@ -202,12 +204,12 @@ Dialog {
                 Layout.fillHeight: true
                 text: resource.path_or_content || ""
                 placeholderText: {
-                    switch(typeCombo.currentText) {
+                    var currentType = typeCombo.model[typeCombo.currentIndex]
+                    switch(currentType) {
                         case "link": return "Enter URL or paste link from clipboard..."
                         case "document": return "Enter file path or drag and drop document..."
                         case "folder": return "Enter folder path or drag and drop folder..."
-                        case "note": return "Type your notes here..."
-                        case "markdown": return "Type markdown content here..."
+                        case "note": return "Type your notes here (supports markdown)..."
                         default: return ""
                     }
                 }
@@ -233,15 +235,12 @@ Dialog {
                     width: parent.width - 20
                     spacing: 8
 
-                    // For markdown
-                    Text {
+                    // For notes (with markdown support)
+                    MarkdownText {
                         id: markdownDisplay
-                        text: root.parseMarkdown(resource.path_or_content || "")
-                        font.pixelSize: 13
-                        color: Style.textMain
-                        wrapMode: Text.Wrap
+                        markdownText: resource.path_or_content || ""
                         Layout.fillWidth: true
-                        visible: (resource.type === "markdown" || resource.type === "note") && !isEditing
+                        visible: resource.type === "note" && !isEditing
                     }
 
                     // For links
@@ -317,55 +316,5 @@ Dialog {
                 onClicked: Qt.openUrlExternally("file:///" + resource.path_or_content)
             }
         }
-    }
-
-    // Markdown parsing function
-    function parseMarkdown(md) {
-        if (!md) return "No content"
-        
-        var result = md
-        
-        // Headers
-        result = result.replace(/^#\s+(.*$)/gm, function(match, p1) {
-            return "\n" + p1.toUpperCase() + "\n"
-        })
-        result = result.replace(/^##\s+(.*$)/gm, function(match, p1) {
-            return "\n**" + p1 + "**\n"
-        })
-        result = result.replace(/^###\s+(.*$)/gm, function(match, p1) {
-            return "\n*" + p1 + "*\n"
-        })
-        
-        // Bold
-        result = result.replace(/\*\*(.*?)\*\*/g, function(match, p1) {
-            return "<b>" + p1 + "</b>"
-        })
-        
-        // Italic
-        result = result.replace(/\*(.*?)\*/g, function(match, p1) {
-            return "<i>" + p1 + "</i>"
-        })
-        
-        // Code blocks
-        result = result.replace(/`(.*?)`/g, function(match, p1) {
-            return "<code>" + p1 + "</code>"
-        })
-        
-        // Lists
-        result = result.replace(/^\s*-\s+(.*)/gm, function(match, p1) {
-            return "  • " + p1
-        })
-        
-        // Blockquotes
-        result = result.replace(/^>\s+(.*)/gm, function(match, p1) {
-            return "    " + p1
-        })
-        
-        // Links
-        result = result.replace(/\[(.*?)\]\((.*?)\)/g, function(match, p1, p2) {
-            return p1 + " (" + p2 + ")"
-        })
-        
-        return result
     }
 }
