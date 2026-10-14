@@ -14,6 +14,17 @@ ApplicationWindow {
     color: Style.background
 
     property bool isSidebarCollapsed: false
+    property bool showOnboarding: true
+
+    // Onboarding View (shown first)
+    OnboardingView {
+        id: onboardingView
+        visible: mainWindow.showOnboarding
+        anchors.fill: parent
+        onOnboardingComplete: {
+            mainWindow.showOnboarding = false
+        }
+    }
 
     // Dialog for creating / editing projects
     ProjectDialog {
@@ -28,7 +39,13 @@ ApplicationWindow {
                     clientEmail,
                     status,
                     deadline,
-                    description
+                    description,
+                    price,
+                    paidAmount,
+                    currency,
+                    tags,
+                    companyId,
+                    isPersonal
                 )
             } else {
                 projectController.add_project(
@@ -37,7 +54,13 @@ ApplicationWindow {
                     clientEmail,
                     status,
                     deadline,
-                    description
+                    description,
+                    price,
+                    paidAmount,
+                    currency,
+                    tags,
+                    companyId,
+                    isPersonal
                 )
             }
         }
@@ -143,10 +166,43 @@ ApplicationWindow {
 
                     CustomButton {
                         Layout.fillWidth: true
-                        text: mainWindow.isSidebarCollapsed ? "" : "Settings"
-                        iconSource: "../../assets/settings.svg"
+                        text: mainWindow.isSidebarCollapsed ? "" : "Project Board"
+                        iconSource: "../../assets/board.svg"
                         variant: mainStack.currentIndex === 4 ? "primary" : "ghost"
                         onClicked: mainStack.currentIndex = 4
+                        ToolTip.text: "Project Board"
+                        ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
+                        ToolTip.delay: 300
+                    }
+
+                    CustomButton {
+                        Layout.fillWidth: true
+                        text: mainWindow.isSidebarCollapsed ? "" : "Goals"
+                        iconSource: "../../assets/goals.svg"
+                        variant: mainStack.currentIndex === 5 ? "primary" : "ghost"
+                        onClicked: mainStack.currentIndex = 5
+                        ToolTip.text: "Goals"
+                        ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
+                        ToolTip.delay: 300
+                    }
+
+                    CustomButton {
+                        Layout.fillWidth: true
+                        text: mainWindow.isSidebarCollapsed ? "" : "Activity & Audit"
+                        iconSource: "../../assets/audit.svg"
+                        variant: mainStack.currentIndex === 6 ? "primary" : "ghost"
+                        onClicked: mainStack.currentIndex = 6
+                        ToolTip.text: "Activity & Audit"
+                        ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
+                        ToolTip.delay: 300
+                    }
+
+                    CustomButton {
+                        Layout.fillWidth: true
+                        text: mainWindow.isSidebarCollapsed ? "" : "Settings"
+                        iconSource: "../../assets/settings.svg"
+                        variant: mainStack.currentIndex === 7 ? "primary" : "ghost"
+                        onClicked: mainStack.currentIndex = 7
                         ToolTip.text: "Settings"
                         ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
                         ToolTip.delay: 300
@@ -194,8 +250,12 @@ ApplicationWindow {
 
             ProjectDetailView {
                 onBackClicked: mainStack.currentIndex = 1
-                onNavigateToAuditView: mainStack.currentIndex = 3
+                onNavigateToAuditView: mainStack.currentIndex = 6
             }
+
+            ProjectBoardView {}
+
+            GoalsView {}
 
             AuditLogView {}
 

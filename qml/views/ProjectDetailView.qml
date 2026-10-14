@@ -21,6 +21,17 @@ ScrollView {
     property int editItemId: 0
     property string editItemType: "" // "step", "deliverable", "resource"
 
+    // Resource Modal
+    ResourceModal {
+        id: resourceModal
+        anchors.centerIn: parent
+    }
+
+    // Clipboard Handler
+    ClipboardHandler {
+        id: clipboardHandler
+    }
+
     // Edit Item Dialog
     Dialog {
         id: editItemDialog
@@ -87,39 +98,7 @@ ScrollView {
                 CustomTextField {
                     id: editResPathInput
                     label: "Path or Content"
-                    placeholderText: editResTypeCombo.currentText === "note" ? "Type note content here..." : "URL or file path..."
                     Layout.fillWidth: true
-                    visible: editResTypeCombo.currentText !== "note"
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 4
-                    visible: editResTypeCombo.currentText === "note"
-
-                    Text {
-                        text: "Note Content"
-                        font.pixelSize: 12
-                        font.weight: Font.Medium
-                        color: Style.textSecondary
-                    }
-
-                    TextArea {
-                        id: editResNoteInput
-                        Layout.fillWidth: true
-                        implicitHeight: 80
-                        placeholderText: "Type note content here..."
-                        wrapMode: TextArea.Wrap
-                        color: Style.textMain
-                        placeholderTextColor: Style.textSecondary
-                        selectionColor: Style.primaryHover
-                        selectedTextColor: Style.surface
-                        background: Rectangle {
-                            radius: Style.radiusMedium
-                            color: Style.background
-                            border.color: editResNoteInput.activeFocus ? Style.primary : Style.border
-                        }
-                    }
                 }
             }
         }
@@ -178,6 +157,10 @@ ScrollView {
                     return "Are you sure you want to delete this deliverable?"
                 else if (root.itemToDeleteType === "resource")
                     return "Are you sure you want to remove this resource?"
+                else if (root.itemToDeleteType === "blocker")
+                    return "Are you sure you want to delete this blocker?"
+                else if (root.itemToDeleteType === "payment")
+                    return "Are you sure you want to delete this payment record?"
                 return "Are you sure you want to proceed?"
             }
             font.pixelSize: 13
@@ -194,6 +177,255 @@ ScrollView {
                 projectController.delete_deliverable(root.itemToDeleteId)
             } else if (root.itemToDeleteType === "resource") {
                 projectController.delete_resource(root.itemToDeleteId)
+            } else if (root.itemToDeleteType === "blocker") {
+                projectController.delete_blocker(root.itemToDeleteId)
+            } else if (root.itemToDeleteType === "payment") {
+                projectController.delete_payment(root.itemToDeleteId)
+            }
+        }
+    }
+
+    // Blocker Dialog
+    Dialog {
+        id: blockerDialog
+        title: isEdit ? "Edit Blocker" : "Add Blocker"
+        modal: true
+        width: 420
+        anchors.centerIn: parent
+
+        property bool isEdit: false
+        property int blockerId: 0
+        property int projectId: 0
+
+        function setBlocker(blocker, pid) {
+            projectId = pid
+            if (blocker && blocker.id) {
+                isEdit = true
+                blockerId = blocker.id
+                titleInput.text = blocker.title || ""
+                descInput.text = blocker.description || ""
+                severityCombo.currentText = blocker.severity ? blocker.severity.charAt(0).toUpperCase() + blocker.severity.slice(1) : "Medium"
+                statusCombo.currentText = blocker.status ? blocker.status.charAt(0).toUpperCase() + blocker.status.slice(1) : "Open"
+            } else {
+                isEdit = false
+                blockerId = 0
+                titleInput.text = ""
+                descInput.text = ""
+                severityCombo.currentIndex = 0
+                statusCombo.currentIndex = 0
+            }
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 20
+            spacing: 12
+
+            CustomTextField {
+                id: titleInput
+                label: "Title *"
+                Layout.fillWidth: true
+            }
+
+            TextArea {
+                id: descInput
+                Layout.fillWidth: true
+                implicitHeight: 80
+                placeholderText: "Describe the blocker..."
+                wrapMode: TextArea.Wrap
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                ColumnLayout {
+                    spacing: 4
+                    Layout.fillWidth: true
+
+                    Text {
+                        text: "Severity"
+                        font.pixelSize: 12
+                        font.weight: Font.Medium
+                        color: "#5F6368"
+                    }
+
+                    CustomComboBox {
+                        id: severityCombo
+                        Layout.fillWidth: true
+                        model: ["Low", "Medium", "High", "Critical"]
+                    }
+                }
+
+                ColumnLayout {
+                    spacing: 4
+                    Layout.fillWidth: true
+
+                    Text {
+                        text: "Status"
+                        font.pixelSize: 12
+                        font.weight: Font.Medium
+                        color: "#5F6368"
+                    }
+
+                    CustomComboBox {
+                        id: statusCombo
+                        Layout.fillWidth: true
+                        model: ["Open", "In Progress", "Resolved"]
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                CustomButton {
+                    text: "Cancel"
+                    variant: "ghost"
+                    Layout.fillWidth: true
+                    onClicked: blockerDialog.close()
+                }
+
+                CustomButton {
+                    text: isEdit ? "Update" : "Add"
+                    variant: "primary"
+                    Layout.fillWidth: true
+                    onClicked: {
+                        if (titleInput.text.trim().length > 0) {
+                            if (isEdit) {
+                                projectController.update_blocker(
+                                    blockerId, titleInput.text, descInput.text,
+                                    severityCombo.currentText.toLowerCase(),
+                                    statusCombo.currentText.toLowerCase()
+                                )
+                            } else {
+                                projectController.add_blocker(
+                                    projectId, -1, titleInput.text, descInput.text,
+                                    severityCombo.currentText.toLowerCase(),
+                                    statusCombo.currentText.toLowerCase()
+                                )
+                            }
+                            blockerDialog.close()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Payment Dialog
+    Dialog {
+        id: paymentDialog
+        title: isEdit ? "Edit Payment" : "Add Payment"
+        modal: true
+        width: 420
+        anchors.centerIn: parent
+
+        property bool isEdit: false
+        property int paymentId: 0
+        property int projectId: 0
+
+        function setPayment(payment, pid) {
+            projectId = pid
+            if (payment && payment.id) {
+                isEdit = true
+                paymentId = payment.id
+                amountInput.text = payment.amount ? payment.amount.toString() : "0"
+                currencyCombo.currentText = payment.currency || "USD"
+                dateInput.text = payment.payment_date || ""
+                methodInput.text = payment.payment_method || ""
+                descInput.text = payment.description || ""
+            } else {
+                isEdit = false
+                paymentId = 0
+                amountInput.text = "0"
+                currencyCombo.currentIndex = 0
+                dateInput.text = ""
+                methodInput.text = ""
+                descInput.text = ""
+            }
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 20
+            spacing: 12
+
+            CustomTextField {
+                id: amountInput
+                label: "Amount *"
+                placeholderText: "0.00"
+                Layout.fillWidth: true
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                CustomTextField {
+                    id: currencyCombo
+                    label: "Currency"
+                    Layout.fillWidth: true
+                    model: ["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF", "CNY"]
+                }
+
+                CustomTextField {
+                    id: dateInput
+                    label: "Payment Date"
+                    placeholderText: "YYYY-MM-DD"
+                    Layout.fillWidth: true
+                }
+            }
+
+            CustomTextField {
+                id: methodInput
+                label: "Payment Method"
+                placeholderText: "e.g., Bank Transfer, PayPal, Cash"
+                Layout.fillWidth: true
+            }
+
+            TextArea {
+                id: descInput
+                Layout.fillWidth: true
+                implicitHeight: 60
+                placeholderText: "Payment description or reference..."
+                wrapMode: TextArea.Wrap
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                CustomButton {
+                    text: "Cancel"
+                    variant: "ghost"
+                    Layout.fillWidth: true
+                    onClicked: paymentDialog.close()
+                }
+
+                CustomButton {
+                    text: isEdit ? "Update" : "Add"
+                    variant: "primary"
+                    Layout.fillWidth: true
+                    onClicked: {
+                        if (amountInput.text.trim().length > 0) {
+                            var amount = parseFloat(amountInput.text) || 0
+                            if (isEdit) {
+                                projectController.update_payment(
+                                    paymentId, amount, currencyCombo.currentText,
+                                    dateInput.text, methodInput.text, descInput.text
+                                )
+                            } else {
+                                projectController.add_payment(
+                                    projectId, amount, currencyCombo.currentText,
+                                    dateInput.text, methodInput.text, descInput.text
+                                )
+                            }
+                            paymentDialog.close()
+                        }
+                    }
+                }
             }
         }
     }
@@ -314,13 +546,159 @@ ScrollView {
                     Text {
                         text: "Last Updated: " + (root.project.updated_at || "N/A")
                         font.pixelSize: 11
-                        color: Style.textLight
+                        color: "#70757A"
                     }
                 }
 
-                MarkdownText {
-                    markdownText: root.project.description || "No description provided."
+                Text {
+                    text: root.project.description || "No description provided."
+                    font.pixelSize: 13
+                    color: "#3C4043"
+                    wrapMode: Text.Wrap
                     Layout.fillWidth: true
+                    spacing: 24
+
+                    ColumnLayout {
+                        spacing: 4
+
+                        Text {
+                            text: "Total Price"
+                            font.pixelSize: 12
+                            color: "#5F6368"
+                        }
+
+                        Text {
+                            text: (root.project.currency || "USD") + " " + (root.project.price ? root.project.price.toFixed(2) : "0.00")
+                            font.pixelSize: 18
+                            font.bold: true
+                            color: "#202124"
+                        }
+                    }
+
+                    ColumnLayout {
+                        spacing: 4
+
+                        Text {
+                            text: "Amount Paid"
+                            font.pixelSize: 12
+                            color: "#5F6368"
+                        }
+
+                        Text {
+                            text: (root.project.currency || "USD") + " " + (root.project.paid_amount ? root.project.paid_amount.toFixed(2) : "0.00")
+                            font.pixelSize: 18
+                            font.bold: true
+                            color: "#34A853"
+                        }
+                    }
+
+                    ColumnLayout {
+                        spacing: 4
+
+                        Text {
+                            text: "Remaining"
+                            font.pixelSize: 12
+                            color: "#5F6368"
+                        }
+
+                        Text {
+                            text: (root.project.currency || "USD") + " " + (root.project.price_remaining ? root.project.price_remaining.toFixed(2) : "0.00")
+                            font.pixelSize: 18
+                            font.bold: true
+                            color: root.project.price_remaining > 0 ? "#EA4335" : "#34A853"
+                        }
+                    }
+                }
+
+                Text {
+                    text: "Tags: " + (root.project.tags_list && root.project.tags_list.length > 0 ? root.project.tags_list.join(", ") : "None")
+                    font.pixelSize: 12
+                    color: "#5F6368"
+                }
+            }
+        }
+
+        // Financial Summary Card
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: financialLayout.implicitHeight + 32
+            radius: 10
+            color: "#FFFFFF"
+            border.color: "#E0E0E0"
+
+            ColumnLayout {
+                id: financialLayout
+                anchors.fill: parent
+                anchors.margins: 16
+                spacing: 12
+
+                Text {
+                    text: "Financial Summary"
+                    font.pixelSize: 16
+                    font.bold: true
+                    color: "#202124"
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 24
+
+                    ColumnLayout {
+                        spacing: 4
+
+                        Text {
+                            text: "Total Price"
+                            font.pixelSize: 12
+                            color: "#5F6368"
+                        }
+
+                        Text {
+                            text: (root.project.currency || "USD") + " " + (root.project.price ? root.project.price.toFixed(2) : "0.00")
+                            font.pixelSize: 18
+                            font.bold: true
+                            color: "#202124"
+                        }
+                    }
+
+                    ColumnLayout {
+                        spacing: 4
+
+                        Text {
+                            text: "Amount Paid"
+                            font.pixelSize: 12
+                            color: "#5F6368"
+                        }
+
+                        Text {
+                            text: (root.project.currency || "USD") + " " + (root.project.paid_amount ? root.project.paid_amount.toFixed(2) : "0.00")
+                            font.pixelSize: 18
+                            font.bold: true
+                            color: "#34A853"
+                        }
+                    }
+
+                    ColumnLayout {
+                        spacing: 4
+
+                        Text {
+                            text: "Remaining"
+                            font.pixelSize: 12
+                            color: "#5F6368"
+                        }
+
+                        Text {
+                            text: (root.project.currency || "USD") + " " + (root.project.price_remaining ? root.project.price_remaining.toFixed(2) : "0.00")
+                            font.pixelSize: 18
+                            font.bold: true
+                            color: root.project.price_remaining > 0 ? "#EA4335" : "#34A853"
+                        }
+                    }
+                }
+
+                Text {
+                    text: "Tags: " + (root.project.tags_list && root.project.tags_list.length > 0 ? root.project.tags_list.join(", ") : "None")
+                    font.pixelSize: 12
+                    color: "#5F6368"
                 }
             }
         }
@@ -535,6 +913,144 @@ ScrollView {
                         }
                     }
                 }
+
+                // Blockers Section
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: blockersColumn.implicitHeight + 32
+                    radius: 10
+                    color: "#FFFFFF"
+                    border.color: "#E0E0E0"
+
+                    ColumnLayout {
+                        id: blockersColumn
+                        anchors.fill: parent
+                        anchors.margins: 16
+                        spacing: 12
+
+                        RowLayout {
+                            Layout.fillWidth: true
+
+                            Text {
+                                text: "Blockers (" + (root.project.blockers ? root.project.blockers.length : 0) + ")"
+                                font.pixelSize: 16
+                                font.bold: true
+                                color: "#202124"
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            CustomButton {
+                                text: "+ Add Blocker"
+                                variant: "secondary"
+                                onClicked: {
+                                    blockerDialog.setBlocker(null, root.project.id)
+                                    blockerDialog.open()
+                                }
+                            }
+                        }
+
+                        // Blockers List
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Repeater {
+                                model: root.project.blockers || []
+
+                                delegate: BlockerItem {
+                                    Layout.fillWidth: true
+                                    blocker: modelData
+                                    onEditClicked: {
+                                        blockerDialog.setBlocker(modelData, root.project.id)
+                                        blockerDialog.open()
+                                    }
+                                    onDeleted: {
+                                        root.itemToDeleteType = "blocker"
+                                        root.itemToDeleteId = modelData.id
+                                        confirmDeleteDialog.open()
+                                    }
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: "No blockers. Great!"
+                            font.pixelSize: 12
+                            color: "#70757A"
+                            visible: !(root.project.blockers && root.project.blockers.length > 0)
+                        }
+                    }
+                }
+
+                // Payments Section
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: paymentsColumn.implicitHeight + 32
+                    radius: 10
+                    color: "#FFFFFF"
+                    border.color: "#E0E0E0"
+
+                    ColumnLayout {
+                        id: paymentsColumn
+                        anchors.fill: parent
+                        anchors.margins: 16
+                        spacing: 12
+
+                        RowLayout {
+                            Layout.fillWidth: true
+
+                            Text {
+                                text: "Payment Trail (" + (root.project.payments ? root.project.payments.length : 0) + ")"
+                                font.pixelSize: 16
+                                font.bold: true
+                                color: "#202124"
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            CustomButton {
+                                text: "+ Add Payment"
+                                variant: "secondary"
+                                onClicked: {
+                                    paymentDialog.setPayment(null, root.project.id)
+                                    paymentDialog.open()
+                                }
+                            }
+                        }
+
+                        // Payments List
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Repeater {
+                                model: root.project.payments || []
+
+                                delegate: PaymentItem {
+                                    Layout.fillWidth: true
+                                    payment: modelData
+                                    onEditClicked: {
+                                        paymentDialog.setPayment(modelData, root.project.id)
+                                        paymentDialog.open()
+                                    }
+                                    onDeleted: {
+                                        root.itemToDeleteType = "payment"
+                                        root.itemToDeleteId = modelData.id
+                                        confirmDeleteDialog.open()
+                                    }
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: "No payments recorded yet."
+                            font.pixelSize: 12
+                            color: "#70757A"
+                            visible: !(root.project.payments && root.project.payments.length > 0)
+                        }
+                    }
+                }
             }
 
             // Right Column: Resources & Audit Trail (Top 6 entries)
@@ -542,15 +1058,14 @@ ScrollView {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 45
                 spacing: 20
-                Layout.alignment: Qt.AlignTop
 
                 // Resources Section
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: resColumn.implicitHeight + 32
-                    radius: Style.radiusLarge
-                    color: Style.surface
-                    border.color: Style.border
+                    radius: 10
+                    color: "#FFFFFF"
+                    border.color: "#E0E0E0"
 
                     ColumnLayout {
                         id: resColumn
@@ -558,57 +1073,68 @@ ScrollView {
                         anchors.margins: 16
                         spacing: 12
 
-                        Text {
-                            text: "Resources & Notes"
-                            font.pixelSize: 16
-                            font.bold: true
-                            color: Style.textMain
-                        }
-
-                        // Add Resource Form
-                        ColumnLayout {
+                        RowLayout {
                             Layout.fillWidth: true
-                            spacing: 8
 
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: 8
-
-                                CustomComboBox {
-                                    id: resTypeCombo
-                                    model: ["link", "document", "folder", "note"]
-                                    implicitWidth: 110
-                                }
-
-                                CustomTextField {
-                                    id: resTitleInput
-                                    placeholderText: "Resource Title (e.g., Design Brief)..."
-                                    Layout.fillWidth: true
-                                }
+                            Text {
+                                text: "Resources & Notes"
+                                font.pixelSize: 16
+                                font.bold: true
+                                color: "#202124"
                             }
 
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: 8
+                            Item { Layout.fillWidth: true }
 
-                                CustomTextField {
-                                    id: resPathInput
-                                    placeholderText: resTypeCombo.currentText === "note" ? "Type note content here..." : "URL or Folder/File Path..."
-                                    Layout.fillWidth: true
-                                    visible: resTypeCombo.currentText !== "note"
+                            CustomButton {
+                                text: "+ Add Resource"
+                                variant: "secondary"
+                                onClicked: {
+                                    resourceModal.setResource(null, root.project.id)
+                                    resourceModal.open()
                                 }
+                            }
+                        }
 
-                                CustomButton {
-                                    text: "Attach"
-                                    visible: resTypeCombo.currentText !== "note"
-                                    onClicked: {
-                                        if (resTitleInput.text.trim().length > 0 && resPathInput.text.trim().length > 0) {
-                                            projectController.add_resource(root.project.id, resTypeCombo.currentText, resTitleInput.text, resPathInput.text)
-                                            resTitleInput.text = ""
-                                            resPathInput.text = ""
-                                        }
+                        // Clipboard paste hint
+                        Text {
+                            text: clipboardHandler.isClipboardTextAUrl() ? "URL detected in clipboard - click to paste" : ""
+                            font.pixelSize: 11
+                            color: "#34A853"
+                            visible: clipboardHandler.isClipboardTextAUrl()
+                        }
+
+                        // Drag and drop area
+                        DropArea {
+                            Layout.fillWidth: true
+                            implicitHeight: 80
+                            onFilesDropped: function(files) {
+                                for (var i = 0; i < files.length; i++) {
+                                    var file = files[i]
+                                    var fileName = file.split("/").pop()
+                                    var ext = fileName.split(".").pop().toLowerCase()
+                                    
+                                    var type = "document"
+                                    if (ext === "md" || ext === "markdown" || ext === "txt") {
+                                        type = "markdown"
+                                    } else if (ext === "pdf" || ext === "doc" || ext === "docx") {
+                                        type = "document"
+                                    } else if (file.startsWith("http")) {
+                                        type = "link"
                                     }
+                                    
+                                    projectController.add_resource(root.project.id, type, fileName, file)
                                 }
+                            }
+                            onTextDropped: function(text) {
+                                var type = "note"
+                                var formattedText = text
+                                
+                                if (clipboardHandler.isValidUrl(text)) {
+                                    type = "link"
+                                    formattedText = clipboardHandler.formatUrl(text)
+                                }
+                                
+                                projectController.add_resource(root.project.id, type, "Dropped Text", formattedText)
                             }
 
                             ColumnLayout {
@@ -666,17 +1192,14 @@ ScrollView {
                                     Layout.fillWidth: true
                                     resource: modelData
                                     onEditClicked: {
-                                        root.editItemType = "resource"
-                                        root.editItemId = modelData.id
-                                        editTitleInput.text = modelData.title || ""
-                                        editResPathInput.text = modelData.path_or_content || ""
-                                        editResNoteInput.text = modelData.path_or_content || ""
-                                        // Set the combo box to match the resource type
-                                        var typeIndex = ["link", "document", "folder", "note"].indexOf(modelData.type || "link")
-                                        if (typeIndex >= 0) {
-                                            editResTypeCombo.currentIndex = typeIndex
-                                        }
-                                        editItemDialog.open()
+                                        resourceModal.setResource(modelData, root.project.id)
+                                        resourceModal.isEditing = true
+                                        resourceModal.open()
+                                    }
+                                    onViewClicked: {
+                                        resourceModal.setResource(modelData, root.project.id)
+                                        resourceModal.isEditing = false
+                                        resourceModal.open()
                                     }
                                     onDeleted: {
                                         root.itemToDeleteType = "resource"
@@ -688,9 +1211,10 @@ ScrollView {
                         }
 
                         Text {
-                            text: "No resources attached yet."
+                            text: "No resources attached yet. Drag & drop files or links, or click '+ Add Resource'"
                             font.pixelSize: 12
-                            color: Style.textLight
+                            color: "#70757A"
+                            Layout.alignment: Qt.AlignHCenter
                             visible: !(root.project.resources && root.project.resources.length > 0)
                         }
                     }

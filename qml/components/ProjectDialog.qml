@@ -72,6 +72,12 @@ Dialog {
     property alias clientEmail: clientEmailInput.text
     property alias deadline: deadlineInput.text
     property alias description: descInput.text
+    property alias price: priceInput.text
+    property alias paidAmount: paidInput.text
+    property alias currency: currencyCombo.currentText
+    property alias tags: tagsInput.text
+    property alias companyId: companyCombo.currentIndex > 0 ? companyCombo.currentValue : -1
+    property alias isPersonal: personalCheck.checked
     property string status: statusCombo.currentText.toLowerCase()
 
     DatePickerDialog {
@@ -91,6 +97,12 @@ Dialog {
             clientEmailInput.text = p.client_email || ""
             deadlineInput.text = p.deadline || ""
             descInput.text = p.description || ""
+            priceInput.text = p.price ? p.price.toString() : "0"
+            paidInput.text = p.paid_amount ? p.paid_amount.toString() : "0"
+            currencyCombo.currentText = p.currency || "USD"
+            tagsInput.text = p.tags || ""
+            personalCheck.checked = p.is_personal === 1
+            
             var stat = (p.status || "active").toLowerCase()
             if (stat === "active") statusCombo.currentIndex = 0
             else if (stat === "paused") statusCombo.currentIndex = 1
@@ -103,6 +115,11 @@ Dialog {
             clientEmailInput.text = ""
             deadlineInput.text = ""
             descInput.text = ""
+            priceInput.text = "0"
+            paidInput.text = "0"
+            currencyCombo.currentIndex = 0
+            tagsInput.text = ""
+            personalCheck.checked = true
             statusCombo.currentIndex = 0
         }
     }
@@ -182,6 +199,95 @@ Dialog {
                     id: statusCombo
                     Layout.fillWidth: true
                     model: ["Active", "Paused", "Completed"]
+                }
+            }
+        }
+
+        // Financial Information
+        Text {
+            text: "Financial Details"
+            font.pixelSize: 14
+            font.bold: true
+            color: "#202124"
+            Layout.fillWidth: true
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 12
+
+            CustomTextField {
+                id: priceInput
+                label: "Total Price/Quote"
+                placeholderText: "0.00"
+                Layout.fillWidth: true
+            }
+
+            CustomTextField {
+                id: paidInput
+                label: "Amount Paid"
+                placeholderText: "0.00"
+                Layout.fillWidth: true
+            }
+
+            ColumnLayout {
+                spacing: 4
+                Layout.fillWidth: true
+
+                Text {
+                    text: "Currency"
+                    font.pixelSize: 12
+                    font.weight: Font.Medium
+                    color: "#5F6368"
+                }
+
+                CustomComboBox {
+                    id: currencyCombo
+                    Layout.fillWidth: true
+                    model: ["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF", "CNY"]
+                }
+            }
+        }
+
+        // Tags and Company
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 12
+
+            CustomTextField {
+                id: tagsInput
+                label: "Tags (comma separated)"
+                placeholderText: "e.g., web, mobile, client-work"
+                Layout.fillWidth: true
+            }
+
+            ColumnLayout {
+                spacing: 4
+                Layout.fillWidth: true
+
+                Text {
+                    text: "Company"
+                    font.pixelSize: 12
+                    font.weight: Font.Medium
+                    color: "#5F6368"
+                }
+
+                CustomComboBox {
+                    id: companyCombo
+                    Layout.fillWidth: true
+                    model: ["Personal"]
+                    onCurrentIndexChanged: personalCheck.checked = currentIndex === 0
+                }
+            }
+        }
+
+        CheckBox {
+            id: personalCheck
+            text: "This is a personal project (not company-related)"
+            checked: true
+            onClicked: {
+                if (checked) {
+                    companyCombo.currentIndex = 0
                 }
             }
         }

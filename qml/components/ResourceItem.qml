@@ -8,6 +8,7 @@ Rectangle {
     property var resource: ({})
     signal editClicked()
     signal deleted()
+    signal viewClicked()
 
     implicitHeight: resource.type === "note" ? Math.max(80, (markdownPreview.visible ? markdownPreview.implicitHeight : 80) + 20) : 50
     radius: Style.radiusMedium
@@ -21,6 +22,7 @@ Rectangle {
             case "document": return "../../assets/file-text.svg"
             case "folder": return "../../assets/projects.svg"
             case "note": return "../../assets/edit.svg"
+            case "markdown": return "../../assets/markdown.svg"
             default: return "../../assets/file-text.svg"
         }
     }
@@ -77,7 +79,7 @@ Rectangle {
         }
 
         CustomButton {
-            text: "Open"
+            text: "View"
             variant: "secondary"
             implicitWidth: 60
             implicitHeight: 28
