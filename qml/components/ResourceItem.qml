@@ -7,8 +7,9 @@ Rectangle {
     property var resource: ({})
     signal editClicked()
     signal deleted()
+    signal viewClicked()
 
-    implicitHeight: resource.type === "note" ? 80 : 50
+    implicitHeight: resource.type === "note" || resource.type === "markdown" ? 80 : 50
     radius: 6
     color: "#FFFFFF"
     border.color: "#E0E0E0"
@@ -20,6 +21,7 @@ Rectangle {
             case "document": return "../../assets/file-text.svg"
             case "folder": return "../../assets/projects.svg"
             case "note": return "../../assets/edit.svg"
+            case "markdown": return "../../assets/markdown.svg"
             default: return "../../assets/file-text.svg"
         }
     }
@@ -33,7 +35,16 @@ Rectangle {
             implicitWidth: 32
             implicitHeight: 32
             radius: 16
-            color: "#F1F3F4"
+            color: {
+                switch(resource.type) {
+                    case "link": return "#E8F0FE"
+                    case "document": return "#E8F5E8"
+                    case "folder": return "#FFF176"
+                    case "note": return "#F3E5F5"
+                    case "markdown": return "#E0F2F1"
+                    default: return "#F1F3F4"
+                }
+            }
 
             Image {
                 anchors.centerIn: parent
@@ -62,18 +73,17 @@ Rectangle {
                 color: "#5F6368"
                 Layout.fillWidth: true
                 elide: Text.ElideRight
-                maximumLineCount: root.resource.type === "note" ? 2 : 1
+                maximumLineCount: root.resource.type === "note" || root.resource.type === "markdown" ? 2 : 1
                 wrapMode: Text.Wrap
             }
         }
 
         CustomButton {
-            text: "Open"
+            text: "View"
             variant: "secondary"
             implicitWidth: 60
             implicitHeight: 28
-            visible: root.resource.type !== "note"
-            onClicked: Qt.openUrlExternally(root.resource.path_or_content)
+            onClicked: root.viewClicked()
         }
 
         CustomButton {
