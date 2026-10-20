@@ -26,14 +26,31 @@ class DatabaseManager:
             CREATE TABLE IF NOT EXISTS user_profiles (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT DEFAULT '',
+                first_name TEXT NOT NULL DEFAULT '',
+                last_name TEXT NOT NULL DEFAULT '',
+                nickname TEXT NOT NULL DEFAULT '',
                 gender TEXT DEFAULT '',
                 email TEXT DEFAULT '',
                 jobs TEXT DEFAULT '',
                 companies TEXT DEFAULT '',
+                employment_history TEXT NOT NULL DEFAULT '[]',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             """)
+            profile_columns = {
+                row["name"]
+                for row in cursor.execute("PRAGMA table_info(user_profiles)").fetchall()
+            }
+            for column in ("first_name", "last_name", "nickname"):
+                if column not in profile_columns:
+                    cursor.execute(
+                        f"ALTER TABLE user_profiles ADD COLUMN {column} TEXT NOT NULL DEFAULT ''"
+                    )
+            if "employment_history" not in profile_columns:
+                cursor.execute(
+                    "ALTER TABLE user_profiles ADD COLUMN employment_history TEXT NOT NULL DEFAULT '[]'"
+                )
 
             # Projects Table with new fields
             cursor.execute("""
@@ -530,6 +547,17 @@ class DatabaseManager:
             for row in cursor.fetchall():
                 items.append(dict(row))
 
+            # Goal target dates (goals that are not finished)
+            cursor.execute("""
+                SELECT 'goal' as item_type, id, title as item_title, 'Goal' as project_title,
+                       target_date as deadline, status, NULL as project_id
+                FROM goals
+                WHERE status NOT IN ('completed', 'failed')
+                  AND target_date IS NOT NULL AND target_date != ''
+            """)
+            for row in cursor.fetchall():
+                items.append(dict(row))
+
             items.sort(key=lambda x: x['deadline'])
             return items[:limit]
 
@@ -540,14 +568,31 @@ class DatabaseManager:
         return res[0] if res else 0
 
     # --- User Profile CRUD ---
-    def add_user_profile(self, name: str = "", gender: str = "", email: str = "", jobs: str = "", companies: str = "") -> int:
+    def add_user_profile(
+        self,
+        name: str = "",
+        gender: str = "",
+        email: str = "",
+        jobs: str = "",
+        companies: str = "",
+        first_name: str = "",
+        last_name: str = "",
+        nickname: str = "",
+        employment_history: str = "[]",
+    ) -> int:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                INSERT INTO user_profiles (name, gender, email, jobs, companies, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (name, gender, email, jobs, companies, now, now))
+                INSERT INTO user_profiles (
+                    name, first_name, last_name, nickname, gender, email,
+                    jobs, companies, employment_history, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                name, first_name, last_name, nickname, gender, email,
+                jobs, companies, employment_history, now, now,
+            ))
             pid = cursor.lastrowid
             conn.commit()
         return pid
@@ -565,15 +610,32 @@ class DatabaseManager:
             row = cursor.fetchone()
             return dict(row) if row else None
 
-    def update_user_profile(self, profile_id: int, name: str = "", gender: str = "", email: str = "", jobs: str = "", companies: str = "") -> bool:
+    def update_user_profile(
+        self,
+        profile_id: int,
+        name: str = "",
+        gender: str = "",
+        email: str = "",
+        jobs: str = "",
+        companies: str = "",
+        first_name: str = "",
+        last_name: str = "",
+        nickname: str = "",
+        employment_history: str = "[]",
+    ) -> bool:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
                 UPDATE user_profiles
-                SET name = ?, gender = ?, email = ?, jobs = ?, companies = ?, updated_at = ?
+                SET name = ?, first_name = ?, last_name = ?, nickname = ?,
+                    gender = ?, email = ?, jobs = ?, companies = ?,
+                    employment_history = ?, updated_at = ?
                 WHERE id = ?
-            """, (name, gender, email, jobs, companies, now, profile_id))
+            """, (
+                name, first_name, last_name, nickname, gender, email,
+                jobs, companies, employment_history, now, profile_id,
+            ))
             if cursor.rowcount > 0:
                 conn.commit()
                 return True

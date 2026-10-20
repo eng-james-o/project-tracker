@@ -48,7 +48,7 @@ ScrollView {
 
             StatCard {
                 title: "Total Projects"
-                value: (projectController.dashboardStats.total || 0).toString()
+                value: (dashboardController.dashboardStats.total || 0).toString()
                 accentColor: Style.primary
                 iconSource: "../../assets/projects.svg"
                 Layout.fillWidth: true
@@ -56,7 +56,7 @@ ScrollView {
 
             StatCard {
                 title: "Active Projects"
-                value: (projectController.dashboardStats.active || 0).toString()
+                value: (dashboardController.dashboardStats.active || 0).toString()
                 accentColor: Style.success
                 iconSource: "../../assets/play.svg"
                 Layout.fillWidth: true
@@ -64,7 +64,7 @@ ScrollView {
 
             StatCard {
                 title: "Paused Projects"
-                value: (projectController.dashboardStats.paused || 0).toString()
+                value: (dashboardController.dashboardStats.paused || 0).toString()
                 accentColor: Style.warning
                 iconSource: "../../assets/pause.svg"
                 Layout.fillWidth: true
@@ -72,7 +72,7 @@ ScrollView {
 
             StatCard {
                 title: "Completed"
-                value: (projectController.dashboardStats.completed || 0).toString()
+                value: (dashboardController.dashboardStats.completed || 0).toString()
                 accentColor: Style.info
                 iconSource: "../../assets/check-circle.svg"
                 Layout.fillWidth: true
@@ -86,7 +86,7 @@ ScrollView {
 
             StatCard {
                 title: "Total Revenue"
-                value: projectController.get_financial_stats().total_revenue ? "$" + projectController.get_financial_stats().total_revenue.toFixed(2) : "$0.00"
+                value: dashboardController.get_financial_stats().total_revenue ? "$" + dashboardController.get_financial_stats().total_revenue.toFixed(2) : "$0.00"
                 accentColor: "#34A853"
                 iconSource: "../../assets/dollar.svg"
                 Layout.fillWidth: true
@@ -94,7 +94,7 @@ ScrollView {
 
             StatCard {
                 title: "Total Paid"
-                value: projectController.get_financial_stats().total_paid ? "$" + projectController.get_financial_stats().total_paid.toFixed(2) : "$0.00"
+                value: dashboardController.get_financial_stats().total_paid ? "$" + dashboardController.get_financial_stats().total_paid.toFixed(2) : "$0.00"
                 accentColor: "#1A73E8"
                 iconSource: "../../assets/payment.svg"
                 Layout.fillWidth: true
@@ -102,15 +102,15 @@ ScrollView {
 
             StatCard {
                 title: "Outstanding"
-                value: projectController.get_financial_stats().total_outstanding ? "$" + projectController.get_financial_stats().total_outstanding.toFixed(2) : "$0.00"
-                accentColor: projectController.get_financial_stats().total_outstanding > 0 ? "#EA4335" : "#34A853"
+                value: dashboardController.get_financial_stats().total_outstanding ? "$" + dashboardController.get_financial_stats().total_outstanding.toFixed(2) : "$0.00"
+                accentColor: dashboardController.get_financial_stats().total_outstanding > 0 ? "#EA4335" : "#34A853"
                 iconSource: "../../assets/outstanding.svg"
                 Layout.fillWidth: true
             }
 
             StatCard {
                 title: "Goals Completed"
-                value: projectController.goals.filter(function(g) { return g.status === "completed" }).length.toString()
+                value: planningController.goals.filter(function(g) { return g.status === "completed" }).length.toString()
                 accentColor: "#174EA6"
                 iconSource: "../../assets/goals.svg"
                 Layout.fillWidth: true
@@ -198,7 +198,7 @@ ScrollView {
                         spacing: 8
 
                         Repeater {
-                            model: projectController.upcomingDeadlines
+                            model: dashboardController.upcomingDeadlines
 
                             delegate: Rectangle {
                                 Layout.fillWidth: true
@@ -213,7 +213,7 @@ ScrollView {
                                     spacing: 10
 
                                     Image {
-                                        source: modelData.item_type === "project" ? "../../assets/projects.svg" : (modelData.item_type === "step" ? "../../assets/edit.svg" : "../../assets/package.svg")
+                                        source: modelData.item_type === "project" ? "../../assets/projects.svg" : (modelData.item_type === "step" ? "../../assets/edit.svg" : (modelData.item_type === "goal" ? "../../assets/goals.svg" : "../../assets/package.svg"))
                                         sourceSize.width: 18
                                         sourceSize.height: 18
                                     }
@@ -231,7 +231,9 @@ ScrollView {
                                         }
 
                                         Text {
-                                            text: modelData.project_title + " (" + modelData.item_type + ")"
+                                            text: modelData.item_type === "goal"
+                                                  ? "Goal"
+                                                  : modelData.project_title + " (" + modelData.item_type + ")"
                                             font.pixelSize: 11
                                             color: Style.textSecondary
                                             elide: Text.ElideRight
@@ -269,7 +271,8 @@ ScrollView {
 
                                 MouseArea {
                                     anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
+                                    enabled: modelData.item_type !== "goal"
+                                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                                     onClicked: {
                                         projectController.load_project_details(modelData.project_id)
                                         root.selectProject(modelData.project_id)
@@ -282,7 +285,7 @@ ScrollView {
                             text: "No upcoming deadlines."
                             font.pixelSize: 13
                             color: Style.textLight
-                            visible: projectController.upcomingDeadlines.length === 0
+                            visible: dashboardController.upcomingDeadlines.length === 0
                         }
                     }
                 }

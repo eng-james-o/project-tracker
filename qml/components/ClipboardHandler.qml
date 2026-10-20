@@ -7,8 +7,10 @@ QtObject {
     
     // Check if clipboard contains text that looks like a URL
     function isClipboardTextAUrl(): bool {
-        var clipboard = Qt.application.clipboard
-        var text = clipboard.text
+        if (typeof clipboardController === "undefined") {
+            return false
+        }
+        var text = clipboardController.get_clipboard_text()
         
         if (!text || text.length === 0) {
             return false
@@ -25,14 +27,18 @@ QtObject {
     
     // Get clipboard text
     function getClipboardText(): string {
-        var clipboard = Qt.application.clipboard
-        return clipboard.text || ""
+        if (typeof clipboardController === "undefined") {
+            return ""
+        }
+        return clipboardController.get_clipboard_text()
     }
     
     // Check if clipboard has text
     function hasText(): bool {
-        var clipboard = Qt.application.clipboard
-        return clipboard.hasText()
+        if (typeof clipboardController === "undefined") {
+            return false
+        }
+        return clipboardController.has_text()
     }
     
     // Check if text is a valid URL

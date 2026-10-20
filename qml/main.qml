@@ -14,15 +14,15 @@ ApplicationWindow {
     color: Style.background
 
     property bool isSidebarCollapsed: false
-    property bool showOnboarding: true
 
-    // Onboarding View (shown first)
+    // Onboarding / profile editor, shown as a modal on first launch
     OnboardingView {
         id: onboardingView
-        visible: mainWindow.showOnboarding
-        anchors.fill: parent
-        onOnboardingComplete: {
-            mainWindow.showOnboarding = false
+    }
+
+    Component.onCompleted: {
+        if (!profileController.onboardingCompleted) {
+            onboardingView.openForSetup()
         }
     }
 
@@ -155,21 +155,10 @@ ApplicationWindow {
 
                     CustomButton {
                         Layout.fillWidth: true
-                        text: mainWindow.isSidebarCollapsed ? "" : "Activity & Audit"
-                        iconSource: "../../assets/audit.svg"
-                        variant: mainStack.currentIndex === 3 ? "primary" : "ghost"
-                        onClicked: mainStack.currentIndex = 3
-                        ToolTip.text: "Activity & Audit"
-                        ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
-                        ToolTip.delay: 300
-                    }
-
-                    CustomButton {
-                        Layout.fillWidth: true
                         text: mainWindow.isSidebarCollapsed ? "" : "Project Board"
                         iconSource: "../../assets/board.svg"
-                        variant: mainStack.currentIndex === 4 ? "primary" : "ghost"
-                        onClicked: mainStack.currentIndex = 4
+                        variant: mainStack.currentIndex === 3 ? "primary" : "ghost"
+                        onClicked: mainStack.currentIndex = 3
                         ToolTip.text: "Project Board"
                         ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
                         ToolTip.delay: 300
@@ -179,8 +168,8 @@ ApplicationWindow {
                         Layout.fillWidth: true
                         text: mainWindow.isSidebarCollapsed ? "" : "Goals"
                         iconSource: "../../assets/goals.svg"
-                        variant: mainStack.currentIndex === 5 ? "primary" : "ghost"
-                        onClicked: mainStack.currentIndex = 5
+                        variant: mainStack.currentIndex === 4 ? "primary" : "ghost"
+                        onClicked: mainStack.currentIndex = 4
                         ToolTip.text: "Goals"
                         ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
                         ToolTip.delay: 300
@@ -190,26 +179,26 @@ ApplicationWindow {
                         Layout.fillWidth: true
                         text: mainWindow.isSidebarCollapsed ? "" : "Activity & Audit"
                         iconSource: "../../assets/audit.svg"
-                        variant: mainStack.currentIndex === 6 ? "primary" : "ghost"
-                        onClicked: mainStack.currentIndex = 6
+                        variant: mainStack.currentIndex === 5 ? "primary" : "ghost"
+                        onClicked: mainStack.currentIndex = 5
                         ToolTip.text: "Activity & Audit"
                         ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
                         ToolTip.delay: 300
                     }
+                    
+                    Item { Layout.fillHeight: true }
 
                     CustomButton {
                         Layout.fillWidth: true
                         text: mainWindow.isSidebarCollapsed ? "" : "Settings"
                         iconSource: "../../assets/settings.svg"
-                        variant: mainStack.currentIndex === 7 ? "primary" : "ghost"
-                        onClicked: mainStack.currentIndex = 7
+                        variant: mainStack.currentIndex === 6 ? "primary" : "ghost"
+                        onClicked: mainStack.currentIndex = 6
                         ToolTip.text: "Settings"
                         ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
                         ToolTip.delay: 300
                     }
                 }
-
-                Item { Layout.fillHeight: true }
 
                 // Quick Add Project Button
                 CustomButton {
@@ -250,7 +239,7 @@ ApplicationWindow {
 
             ProjectDetailView {
                 onBackClicked: mainStack.currentIndex = 1
-                onNavigateToAuditView: mainStack.currentIndex = 6
+                onNavigateToAuditView: mainStack.currentIndex = 5
             }
 
             ProjectBoardView {}
@@ -259,7 +248,9 @@ ApplicationWindow {
 
             AuditLogView {}
 
-            SettingsView {}
+            SettingsView {
+                onEditProfileRequested: onboardingView.openForEdit()
+            }
         }
     }
 }

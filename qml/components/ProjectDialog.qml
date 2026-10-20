@@ -3,66 +3,10 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import "../"
 
-Dialog {
+CustomModal {
     id: root
     title: isEdit ? "Edit Project" : "New Project"
-    modal: true
     width: 480
-    
-    header: Rectangle {
-        color: Style.background
-        implicitHeight: 60
-        radius: Style.radiusLarge
-        
-        // This hides the rounding at the bottom by drawing a rectangle over it
-        Rectangle {
-            anchors.bottom: parent.bottom
-            width: parent.width
-            height: Style.radiusLarge
-            color: Style.background
-        }
-        
-        Text {
-            anchors.centerIn: parent
-            text: root.title
-            font.pixelSize: 18
-            font.bold: true
-            color: Style.textMain
-        }
-        
-        Rectangle {
-            anchors.bottom: parent.bottom
-            width: parent.width
-            height: 1
-            color: Style.border
-        }
-    }
-
-    background: Rectangle {
-        color: Style.surface
-        radius: Style.radiusLarge
-        border.color: Style.border
-    }
-
-    footer: Rectangle {
-        implicitHeight: 68
-        color: "transparent"
-        RowLayout {
-            anchors.fill: parent
-            anchors.margins: 16
-            Item { Layout.fillWidth: true }
-            CustomButton {
-                text: "Cancel"
-                variant: "ghost"
-                onClicked: root.reject()
-            }
-            CustomButton {
-                text: "Save"
-                variant: "primary"
-                onClicked: root.accept()
-            }
-        }
-    }
 
     property bool isEdit: false
     property int projectId: 0
@@ -76,8 +20,11 @@ Dialog {
     property alias paidAmount: paidInput.text
     property alias currency: currencyCombo.currentText
     property alias tags: tagsInput.text
-    property int companyId: companyCombo.currentIndex > 0 ? companyCombo.currentValue : -1
-    property alias isPersonal: personalCheck.checked
+    property string editingCompanyName: ""
+    property int companyId: companyCombo.currentIndex > 0
+                             ? profileController.companyIdForName(companyCombo.currentText)
+                             : -1
+    property bool isPersonal: companyCombo.currentIndex === 0
     property string status: statusCombo.currentText.toLowerCase()
 
     DatePickerDialog {
@@ -101,7 +48,12 @@ Dialog {
             paidInput.text = p.paid_amount ? p.paid_amount.toString() : "0"
             currencyCombo.currentText = p.currency || "USD"
             tagsInput.text = p.tags || ""
-            personalCheck.checked = p.is_personal === 1
+            editingCompanyName = p.is_personal === 1
+                                 ? ""
+                                 : profileController.companyNameForId(p.company_id || -1)
+            companyCombo.currentIndex = p.is_personal === 1
+                                        ? 0
+                                        : companyCombo.find(editingCompanyName)
             
             var stat = (p.status || "active").toLowerCase()
             if (stat === "active") statusCombo.currentIndex = 0
@@ -119,13 +71,14 @@ Dialog {
             paidInput.text = "0"
             currencyCombo.currentIndex = 0
             tagsInput.text = ""
-            personalCheck.checked = true
+            editingCompanyName = ""
+            companyCombo.currentIndex = 0
             statusCombo.currentIndex = 0
         }
     }
 
     ColumnLayout {
-        anchors.fill: parent
+        Layout.fillWidth: true
         spacing: 12
 
         CustomTextField {
@@ -244,7 +197,7 @@ Dialog {
                 CustomComboBox {
                     id: currencyCombo
                     Layout.fillWidth: true
-                    model: ["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF", "CNY"]
+                    model: ["NGN", "USD", "EUR", "GBP"]
                 }
             }
         }
@@ -255,6 +208,8 @@ Dialog {
             spacing: 12
 
             CustomTextField {
+                // TODO: tags should be stored in the database and should be reusable when the user is filling this field
+                // Tags serve as a means to filter or search for a project or idea, or goal
                 id: tagsInput
                 label: "Tags (comma separated)"
                 placeholderText: "e.g., web, mobile, client-work"
@@ -275,19 +230,12 @@ Dialog {
                 CustomComboBox {
                     id: companyCombo
                     Layout.fillWidth: true
-                    model: ["Personal"]
-                    onCurrentIndexChanged: personalCheck.checked = currentIndex === 0
-                }
-            }
-        }
-
-        CheckBox {
-            id: personalCheck
-            text: "This is a personal project (not company-related)"
-            checked: true
-            onClicked: {
-                if (checked) {
-                    companyCombo.currentIndex = 0
+                    model: profileController.projectCompanyNames.concat(
+                               root.isEdit
+                               && root.editingCompanyName
+                               && profileController.projectCompanyNames.indexOf(root.editingCompanyName) < 0
+                               ? [root.editingCompanyName]
+                               : [])
                 }
             }
         }

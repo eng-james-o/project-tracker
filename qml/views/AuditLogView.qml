@@ -40,7 +40,7 @@ ScrollView {
             CustomButton {
                 text: "Purge Logs"
                 variant: "secondary"
-                onClicked: projectController.clearAuditLogs()
+                onClicked: dashboardController.clearAuditLogs()
             }
         }
 
@@ -59,7 +59,7 @@ ScrollView {
                 spacing: 10
 
                 Repeater {
-                    model: projectController.auditLogs
+                    model: dashboardController.auditLogs
 
                     delegate: Rectangle {
                         Layout.fillWidth: true
@@ -119,7 +119,7 @@ ScrollView {
                     text: "No audit logs available."
                     font.pixelSize: 13
                     color: "#70757A"
-                    visible: projectController.auditLogs.length === 0
+                    visible: dashboardController.auditLogs.length === 0
                 }
             }
         }

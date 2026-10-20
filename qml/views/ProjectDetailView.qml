@@ -105,12 +105,11 @@ ScrollView {
 
         onAccepted: {
             if (root.editItemType === "step") {
-                projectController.update_step(root.editItemId, editTitleInput.text, editDeadlineInput.text)
+                projectDetailsController.update_step(root.editItemId, editTitleInput.text, editDeadlineInput.text)
             } else if (root.editItemType === "deliverable") {
-                projectController.update_deliverable(root.editItemId, editTitleInput.text, editDeadlineInput.text)
+                projectDetailsController.update_deliverable(root.editItemId, editTitleInput.text, editDeadlineInput.text)
             } else if (root.editItemType === "resource") {
-                var pathContent = editResTypeCombo.currentText === "note" ? editResNoteInput.text : editResPathInput.text
-                projectController.update_resource(root.editItemId, editResTypeCombo.currentText, editTitleInput.text, pathContent)
+                projectDetailsController.update_resource(root.editItemId, editResTypeCombo.currentText, editTitleInput.text, editResPathInput.text)
             }
         }
     }
@@ -172,15 +171,15 @@ ScrollView {
                 projectController.delete_project(root.project.id)
                 root.backClicked()
             } else if (root.itemToDeleteType === "step") {
-                projectController.delete_step(root.itemToDeleteId)
+                projectDetailsController.delete_step(root.itemToDeleteId)
             } else if (root.itemToDeleteType === "deliverable") {
-                projectController.delete_deliverable(root.itemToDeleteId)
+                projectDetailsController.delete_deliverable(root.itemToDeleteId)
             } else if (root.itemToDeleteType === "resource") {
-                projectController.delete_resource(root.itemToDeleteId)
+                projectDetailsController.delete_resource(root.itemToDeleteId)
             } else if (root.itemToDeleteType === "blocker") {
-                projectController.delete_blocker(root.itemToDeleteId)
+                projectDetailsController.delete_blocker(root.itemToDeleteId)
             } else if (root.itemToDeleteType === "payment") {
-                projectController.delete_payment(root.itemToDeleteId)
+                projectDetailsController.delete_payment(root.itemToDeleteId)
             }
         }
     }
@@ -188,7 +187,7 @@ ScrollView {
     // Blocker Dialog
     Dialog {
         id: blockerDialog
-        title: isEdit ? "Edit Blocker" : "Add Blocker"
+        title: blockerDialog.isEdit ? "Edit Blocker" : "Add Blocker"
         modal: true
         width: 420
         anchors.centerIn: parent
@@ -283,24 +282,24 @@ ScrollView {
                 CustomButton {
                     text: "Cancel"
                     variant: "ghost"
-                    Layout.fillWidth: true
                     onClicked: blockerDialog.close()
                 }
 
+                Item { Layout.fillWidth: true }
+
                 CustomButton {
-                    text: isEdit ? "Update" : "Add"
+                    text: blockerDialog.isEdit ? "Update" : "Add"
                     variant: "primary"
-                    Layout.fillWidth: true
                     onClicked: {
                         if (titleInput.text.trim().length > 0) {
-                            if (isEdit) {
-                                projectController.update_blocker(
+                            if (blockerDialog.isEdit) {
+                                projectDetailsController.update_blocker(
                                     blockerId, titleInput.text, descInput.text,
                                     severityCombo.currentText.toLowerCase(),
                                     statusCombo.currentText.toLowerCase()
                                 )
                             } else {
-                                projectController.add_blocker(
+                                projectDetailsController.add_blocker(
                                     projectId, -1, titleInput.text, descInput.text,
                                     severityCombo.currentText.toLowerCase(),
                                     statusCombo.currentText.toLowerCase()
@@ -317,7 +316,7 @@ ScrollView {
     // Payment Dialog
     Dialog {
         id: paymentDialog
-        title: isEdit ? "Edit Payment" : "Add Payment"
+        title: paymentDialog.isEdit ? "Edit Payment" : "Add Payment"
         modal: true
         width: 420
         anchors.centerIn: parent
@@ -363,11 +362,10 @@ ScrollView {
                 Layout.fillWidth: true
                 spacing: 12
 
-                CustomTextField {
+                CustomComboBox {
                     id: currencyCombo
-                    label: "Currency"
                     Layout.fillWidth: true
-                    model: ["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF", "CNY"]
+                    model: ["NGN", "USD", "EUR", "GBP", "CAD"]
                 }
 
                 CustomTextField {
@@ -386,7 +384,7 @@ ScrollView {
             }
 
             TextArea {
-                id: descInput
+                id: paymentDescInput
                 Layout.fillWidth: true
                 implicitHeight: 60
                 placeholderText: "Payment description or reference..."
@@ -400,26 +398,26 @@ ScrollView {
                 CustomButton {
                     text: "Cancel"
                     variant: "ghost"
-                    Layout.fillWidth: true
                     onClicked: paymentDialog.close()
                 }
 
+                Item { Layout.fillWidth: true }
+
                 CustomButton {
-                    text: isEdit ? "Update" : "Add"
+                    text: paymentDialog.isEdit ? "Update" : "Add"
                     variant: "primary"
-                    Layout.fillWidth: true
                     onClicked: {
                         if (amountInput.text.trim().length > 0) {
                             var amount = parseFloat(amountInput.text) || 0
-                            if (isEdit) {
-                                projectController.update_payment(
+                            if (paymentDialog.isEdit) {
+                                projectDetailsController.update_payment(
                                     paymentId, amount, currencyCombo.currentText,
-                                    dateInput.text, methodInput.text, descInput.text
+                                    dateInput.text, methodInput.text, paymentDescInput.text
                                 )
                             } else {
-                                projectController.add_payment(
+                                projectDetailsController.add_payment(
                                     projectId, amount, currencyCombo.currentText,
-                                    dateInput.text, methodInput.text, descInput.text
+                                    dateInput.text, methodInput.text, paymentDescInput.text
                                 )
                             }
                             paymentDialog.close()
@@ -555,6 +553,10 @@ ScrollView {
                     font.pixelSize: 13
                     color: "#3C4043"
                     wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+
+                RowLayout {
                     Layout.fillWidth: true
                     spacing: 24
 
@@ -775,7 +777,7 @@ ScrollView {
                                 text: "Add Step"
                                 onClicked: {
                                     if (newStepTitle.text.trim().length > 0) {
-                                        projectController.add_step(root.project.id, newStepTitle.text, newStepDeadline.text)
+                                        projectDetailsController.add_step(root.project.id, newStepTitle.text, newStepDeadline.text)
                                         newStepTitle.text = ""
                                         newStepDeadline.text = ""
                                     }
@@ -790,7 +792,7 @@ ScrollView {
                             delegate: StepItem {
                                 Layout.fillWidth: true
                                 step: modelData
-                                onToggled: function(completed) { projectController.toggle_step(modelData.id, completed) }
+                                onToggled: function(completed) { projectDetailsController.toggle_step(modelData.id, completed) }
                                 onEditClicked: {
                                     root.editItemType = "step"
                                     root.editItemId = modelData.id
@@ -874,7 +876,7 @@ ScrollView {
                                 text: "Add"
                                 onClicked: {
                                     if (newDelivTitle.text.trim().length > 0) {
-                                        projectController.add_deliverable(root.project.id, newDelivTitle.text, newDelivDeadline.text)
+                                        projectDetailsController.add_deliverable(root.project.id, newDelivTitle.text, newDelivDeadline.text)
                                         newDelivTitle.text = ""
                                         newDelivDeadline.text = ""
                                     }
@@ -889,7 +891,7 @@ ScrollView {
                             delegate: DeliverableItem {
                                 Layout.fillWidth: true
                                 deliverable: modelData
-                                onToggled: function(completed) { projectController.toggle_deliverable(modelData.id, completed) }
+                                onToggled: function(completed) { projectDetailsController.toggle_deliverable(modelData.id, completed) }
                                 onEditClicked: {
                                     root.editItemType = "deliverable"
                                     root.editItemId = modelData.id
@@ -1058,6 +1060,7 @@ ScrollView {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 45
                 spacing: 20
+                Layout.alignment: Qt.AlignTop
 
                 // Resources Section
                 Rectangle {
@@ -1122,7 +1125,7 @@ ScrollView {
                                         type = "link"
                                     }
                                     
-                                    projectController.add_resource(root.project.id, type, fileName, file)
+                                    projectDetailsController.add_resource(root.project.id, type, fileName, file)
                                 }
                             }
                             onTextDropped: function(text) {
@@ -1134,49 +1137,7 @@ ScrollView {
                                     formattedText = clipboardHandler.formatUrl(text)
                                 }
                                 
-                                projectController.add_resource(root.project.id, type, "Dropped Text", formattedText)
-                            }
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 4
-                                visible: resTypeCombo.currentText === "note"
-
-                                Text {
-                                    text: "Note Content"
-                                    font.pixelSize: 12
-                                    font.weight: Font.Medium
-                                    color: Style.textSecondary
-                                }
-
-                                TextArea {
-                                    id: resNoteInput
-                                    Layout.fillWidth: true
-                                    implicitHeight: 80
-                                    placeholderText: "Type note content here..."
-                                    wrapMode: TextArea.Wrap
-                                    color: Style.textMain
-                                    placeholderTextColor: Style.textSecondary
-                                    selectionColor: Style.primaryHover
-                                    selectedTextColor: Style.surface
-                                    background: Rectangle {
-                                        radius: Style.radiusMedium
-                                        color: Style.background
-                                        border.color: resNoteInput.activeFocus ? Style.primary : Style.border
-                                    }
-                                }
-
-                                CustomButton {
-                                    text: "Attach Note"
-                                    Layout.alignment: Qt.AlignRight
-                                    onClicked: {
-                                        if (resTitleInput.text.trim().length > 0 && resNoteInput.text.trim().length > 0) {
-                                            projectController.add_resource(root.project.id, resTypeCombo.currentText, resTitleInput.text, resNoteInput.text)
-                                            resTitleInput.text = ""
-                                            resNoteInput.text = ""
-                                        }
-                                    }
-                                }
+                                projectDetailsController.add_resource(root.project.id, type, "Dropped Text", formattedText)
                             }
                         }
 

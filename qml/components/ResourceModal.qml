@@ -46,7 +46,7 @@ Dialog {
 
     onAccepted: {
         if (isEditing) {
-            projectController.update_resource(
+            projectDetailsController.update_resource(
                 resource.id,
                 typeCombo.currentText,
                 titleInput.text,
@@ -276,7 +276,6 @@ Dialog {
             CustomButton {
                 text: isEditing ? "Cancel" : "Close"
                 variant: "ghost"
-                Layout.fillWidth: true
                 onClicked: {
                     if (isEditing && hasUnsavedChanges) {
                         unsavedDialog.open()
@@ -290,7 +289,6 @@ Dialog {
             CustomButton {
                 text: isEditing ? "Save" : "Edit"
                 variant: isEditing ? "primary" : "secondary"
-                Layout.fillWidth: true
                 onClicked: {
                     if (isEditing) {
                         root.onAccepted()
@@ -299,6 +297,8 @@ Dialog {
                     }
                 }
             }
+
+            Item { Layout.fillWidth: true }
 
             // Open button for links
             CustomButton {

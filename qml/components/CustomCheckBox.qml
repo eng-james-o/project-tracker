@@ -17,7 +17,7 @@ CheckBox {
 
         Image {
             anchors.centerIn: parent
-            source: "../../assets/check-circle.svg"
+            source: "../../assets/check.svg"
             sourceSize.width: 12
             sourceSize.height: 12
             visible: control.checked

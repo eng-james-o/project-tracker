@@ -132,7 +132,7 @@ Rectangle {
                 implicitWidth: 80
                 onClicked: {
                     var newStatus = blocker.status === "resolved" ? "open" : "resolved"
-                    projectController.update_blocker(blocker.id, blocker.title, blocker.description, blocker.severity, newStatus)
+                    projectDetailsController.update_blocker(blocker.id, blocker.title, blocker.description, blocker.severity, newStatus)
                 }
             }
         }

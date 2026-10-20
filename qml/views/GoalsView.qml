@@ -48,13 +48,14 @@ ScrollView {
         // Filter and Search Bar
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: 80
+            implicitHeight: filterCol.implicitHeight + 32
             radius: 8
             color: "#FFFFFF"
             border.color: "#E0E0E0"
             border.width: 1
 
             ColumnLayout {
+                id: filterCol
                 anchors.fill: parent
                 anchors.margins: 16
                 spacing: 12
@@ -73,7 +74,7 @@ ScrollView {
                         id: searchBox
                         placeholderText: "Search goals..."
                         Layout.fillWidth: true
-                        onTextChanged: projectController.setGoalsSearch(text)
+                        onTextChanged: planningController.setGoalsSearch(text)
                     }
                 }
 
@@ -93,7 +94,7 @@ ScrollView {
                         CustomComboBox {
                             id: typeFilter
                             model: ["All", "Daily", "Weekly", "Monthly"]
-                            onCurrentTextChanged: projectController.setGoalsTypeFilter(currentText)
+                            onCurrentTextChanged: planningController.setGoalsTypeFilter(currentText)
                         }
                     }
 
@@ -109,7 +110,7 @@ ScrollView {
                         CustomComboBox {
                             id: statusFilter
                             model: ["All", "Pending", "In Progress", "Completed", "Failed"]
-                            onCurrentTextChanged: projectController.setGoalsStatusFilter(currentText)
+                            onCurrentTextChanged: planningController.setGoalsStatusFilter(currentText)
                         }
                     }
                 }
@@ -148,24 +149,24 @@ ScrollView {
                         Item { Layout.fillWidth: true }
 
                         Text {
-                            text: projectController.goals.filter(function(g) { return g.goal_type === 'daily' && g.status === 'completed' }).length + "/" + projectController.goals.filter(function(g) { return g.goal_type === 'daily' }).length + " completed"
+                            text: planningController.goals.filter(function(g) { return g.goal_type === 'daily' && g.status === 'completed' }).length + "/" + planningController.goals.filter(function(g) { return g.goal_type === 'daily' }).length + " completed"
                             font.pixelSize: 12
                             color: "#5F6368"
                         }
                     }
 
                     Repeater {
-                        model: projectController.goals.filter(function(g) { return g.goal_type === 'daily' })
+                        model: planningController.goals.filter(function(g) { return g.goal_type === 'daily' })
 
                         delegate: GoalItem {
                             Layout.fillWidth: true
                             goal: modelData
-                            onStatusChanged: projectController.refresh_goals()
+                            onStatusChanged: planningController.refresh_goals()
                             onEditClicked: {
                                 goalDialog.setGoal(modelData)
                                 goalDialog.open()
                             }
-                            onDeleted: projectController.delete_goal(modelData.id)
+                            onDeleted: planningController.delete_goal(modelData.id)
                         }
                     }
 
@@ -173,7 +174,7 @@ ScrollView {
                         text: "No daily goals. Add one to get started!"
                         font.pixelSize: 12
                         color: "#70757A"
-                        visible: projectController.goals.filter(function(g) { return g.goal_type === 'daily' }).length === 0
+                        visible: planningController.goals.filter(function(g) { return g.goal_type === 'daily' }).length === 0
                     }
                 }
             }
@@ -205,24 +206,24 @@ ScrollView {
                         Item { Layout.fillWidth: true }
 
                         Text {
-                            text: projectController.goals.filter(function(g) { return g.goal_type === 'weekly' && g.status === 'completed' }).length + "/" + projectController.goals.filter(function(g) { return g.goal_type === 'weekly' }).length + " completed"
+                            text: planningController.goals.filter(function(g) { return g.goal_type === 'weekly' && g.status === 'completed' }).length + "/" + planningController.goals.filter(function(g) { return g.goal_type === 'weekly' }).length + " completed"
                             font.pixelSize: 12
                             color: "#5F6368"
                         }
                     }
 
                     Repeater {
-                        model: projectController.goals.filter(function(g) { return g.goal_type === 'weekly' })
+                        model: planningController.goals.filter(function(g) { return g.goal_type === 'weekly' })
 
                         delegate: GoalItem {
                             Layout.fillWidth: true
                             goal: modelData
-                            onStatusChanged: projectController.refresh_goals()
+                            onStatusChanged: planningController.refresh_goals()
                             onEditClicked: {
                                 goalDialog.setGoal(modelData)
                                 goalDialog.open()
                             }
-                            onDeleted: projectController.delete_goal(modelData.id)
+                            onDeleted: planningController.delete_goal(modelData.id)
                         }
                     }
 
@@ -230,7 +231,7 @@ ScrollView {
                         text: "No weekly goals. Add one to get started!"
                         font.pixelSize: 12
                         color: "#70757A"
-                        visible: projectController.goals.filter(function(g) { return g.goal_type === 'weekly' }).length === 0
+                        visible: planningController.goals.filter(function(g) { return g.goal_type === 'weekly' }).length === 0
                     }
                 }
             }
@@ -262,24 +263,24 @@ ScrollView {
                         Item { Layout.fillWidth: true }
 
                         Text {
-                            text: projectController.goals.filter(function(g) { return g.goal_type === 'monthly' && g.status === 'completed' }).length + "/" + projectController.goals.filter(function(g) { return g.goal_type === 'monthly' }).length + " completed"
+                            text: planningController.goals.filter(function(g) { return g.goal_type === 'monthly' && g.status === 'completed' }).length + "/" + planningController.goals.filter(function(g) { return g.goal_type === 'monthly' }).length + " completed"
                             font.pixelSize: 12
                             color: "#5F6368"
                         }
                     }
 
                     Repeater {
-                        model: projectController.goals.filter(function(g) { return g.goal_type === 'monthly' })
+                        model: planningController.goals.filter(function(g) { return g.goal_type === 'monthly' })
 
                         delegate: GoalItem {
                             Layout.fillWidth: true
                             goal: modelData
-                            onStatusChanged: projectController.refresh_goals()
+                            onStatusChanged: planningController.refresh_goals()
                             onEditClicked: {
                                 goalDialog.setGoal(modelData)
                                 goalDialog.open()
                             }
-                            onDeleted: projectController.delete_goal(modelData.id)
+                            onDeleted: planningController.delete_goal(modelData.id)
                         }
                     }
 
@@ -287,7 +288,7 @@ ScrollView {
                         text: "No monthly goals. Add one to get started!"
                         font.pixelSize: 12
                         color: "#70757A"
-                        visible: projectController.goals.filter(function(g) { return g.goal_type === 'monthly' }).length === 0
+                        visible: planningController.goals.filter(function(g) { return g.goal_type === 'monthly' }).length === 0
                     }
                 }
             }
@@ -319,7 +320,7 @@ ScrollView {
                 checked: goal.status === "completed"
                 onClicked: {
                     var newStatus = checked ? "completed" : "pending"
-                    projectController.update_goal(goal.id, goal.title, goal.description, goal.goal_type, goal.target_date, newStatus, goal.priority, goal.tags, goal.is_recurring === 1)
+                    planningController.update_goal(goal.id, goal.title, goal.description, goal.goal_type, goal.target_date, newStatus, goal.priority, goal.tags, goal.is_recurring === 1)
                     statusChanged()
                 }
             }
@@ -380,183 +381,8 @@ ScrollView {
         }
     }
 
-    // Goal Dialog
-    Dialog {
+    GoalDialog {
         id: goalDialog
-        title: isEdit ? "Edit Goal" : "New Goal"
-        modal: true
-        width: 500
-
-        property bool isEdit: false
-        property int goalId: 0
-
-        function setGoal(goal) {
-            if (goal && goal.id) {
-                isEdit = true
-                goalId = goal.id
-                titleInput.text = goal.title || ""
-                descInput.text = goal.description || ""
-                typeCombo.currentText = goal.goal_type ? goal.goal_type.charAt(0).toUpperCase() + goal.goal_type.slice(1) : "Daily"
-                dateInput.text = goal.target_date || ""
-                statusCombo.currentText = goal.status ? goal.status.charAt(0).toUpperCase() + goal.status.slice(1) : "Pending"
-                priorityCombo.currentText = goal.priority ? goal.priority.charAt(0).toUpperCase() + goal.priority.slice(1) : "Medium"
-                tagsInput.text = goal.tags || ""
-                recurringCheck.checked = goal.is_recurring === 1
-            } else {
-                isEdit = false
-                goalId = 0
-                titleInput.text = ""
-                descInput.text = ""
-                typeCombo.currentIndex = 0
-                dateInput.text = ""
-                statusCombo.currentIndex = 0
-                priorityCombo.currentIndex = 0
-                tagsInput.text = ""
-                recurringCheck.checked = false
-            }
-        }
-
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 20
-            spacing: 12
-
-            CustomTextField {
-                id: titleInput
-                label: "Title *"
-                Layout.fillWidth: true
-            }
-
-            TextArea {
-                id: descInput
-                Layout.fillWidth: true
-                implicitHeight: 80
-                placeholderText: "Describe your goal..."
-                wrapMode: TextArea.Wrap
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 12
-
-                ColumnLayout {
-                    spacing: 4
-                    Layout.fillWidth: true
-
-                    Text {
-                        text: "Type"
-                        font.pixelSize: 12
-                        font.weight: Font.Medium
-                        color: "#5F6368"
-                    }
-
-                    CustomComboBox {
-                        id: typeCombo
-                        Layout.fillWidth: true
-                        model: ["Daily", "Weekly", "Monthly"]
-                    }
-                }
-
-                ColumnLayout {
-                    spacing: 4
-                    Layout.fillWidth: true
-
-                    Text {
-                        text: "Status"
-                        font.pixelSize: 12
-                        font.weight: Font.Medium
-                        color: "#5F6368"
-                    }
-
-                    CustomComboBox {
-                        id: statusCombo
-                        Layout.fillWidth: true
-                        model: ["Pending", "In Progress", "Completed", "Failed"]
-                    }
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 12
-
-                ColumnLayout {
-                    spacing: 4
-                    Layout.fillWidth: true
-
-                    Text {
-                        text: "Priority"
-                        font.pixelSize: 12
-                        font.weight: Font.Medium
-                        color: "#5F6368"
-                    }
-
-                    CustomComboBox {
-                        id: priorityCombo
-                        Layout.fillWidth: true
-                        model: ["Low", "Medium", "High", "Critical"]
-                    }
-                }
-
-                CustomTextField {
-                    id: dateInput
-                    label: "Target Date"
-                    placeholderText: "YYYY-MM-DD"
-                    Layout.fillWidth: true
-                }
-            }
-
-            CustomTextField {
-                id: tagsInput
-                label: "Tags (comma separated)"
-                placeholderText: "e.g., work, personal"
-                Layout.fillWidth: true
-            }
-
-            CheckBox {
-                id: recurringCheck
-                text: "Recurring Goal"
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 12
-
-                CustomButton {
-                    text: "Cancel"
-                    variant: "ghost"
-                    Layout.fillWidth: true
-                    onClicked: goalDialog.close()
-                }
-
-                CustomButton {
-                    text: isEdit ? "Update" : "Add"
-                    variant: "primary"
-                    Layout.fillWidth: true
-                    onClicked: {
-                        if (titleInput.text.trim().length > 0) {
-                            if (isEdit) {
-                                projectController.update_goal(
-                                    goalId, titleInput.text, descInput.text,
-                                    typeCombo.currentText.toLowerCase(),
-                                    dateInput.text, statusCombo.currentText.toLowerCase(),
-                                    priorityCombo.currentText.toLowerCase(),
-                                    tagsInput.text, recurringCheck.checked
-                                )
-                            } else {
-                                projectController.add_goal(
-                                    titleInput.text, descInput.text,
-                                    typeCombo.currentText.toLowerCase(),
-                                    dateInput.text, statusCombo.currentText.toLowerCase(),
-                                    priorityCombo.currentText.toLowerCase(),
-                                    tagsInput.text, recurringCheck.checked
-                                )
-                            }
-                            goalDialog.close()
-                        }
-                    }
-                }
-            }
-        }
+        anchors.centerIn: parent
     }
 }

@@ -9,6 +9,15 @@ ScrollView {
     contentWidth: availableWidth
     clip: true
 
+    signal editProfileRequested()
+
+    readonly property var profile: profileController.userProfile
+    readonly property bool hasProfile: profile !== undefined && profile !== null && profile.id !== undefined
+    readonly property string profileDisplayName: profile.nickname
+                                                   || ((profile.first_name || profile.last_name)
+                                                       ? ((profile.first_name || "") + " " + (profile.last_name || "")).trim()
+                                                       : (profile.name || "Unnamed"))
+
     ColumnLayout {
         width: parent.width - 40
         anchors.horizontalCenter: parent.horizontalCenter
@@ -29,6 +38,52 @@ ScrollView {
                 text: "Configure audit trail row limits and application preferences"
                 font.pixelSize: 13
                 color: Style.textSecondary
+            }
+        }
+
+        // Your Profile Card
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: profileCol.implicitHeight + 32
+            radius: Style.radiusLarge
+            color: Style.surface
+            border.color: Style.border
+
+            ColumnLayout {
+                id: profileCol
+                anchors.fill: parent
+                anchors.margins: 16
+                spacing: 8
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 16
+
+                    Text {
+                        text: "Your Profile"
+                        font.pixelSize: 16
+                        font.bold: true
+                        color: Style.textMain
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    CustomButton {
+                        text: root.hasProfile ? "Edit Details" : "Set Up Profile"
+                        variant: "secondary"
+                        onClicked: root.editProfileRequested()
+                    }
+                }
+
+                Text {
+                    text: root.hasProfile
+                          ? root.profileDisplayName + (root.profile.email ? "  ·  " + root.profile.email : "")
+                          : "No profile saved yet. Set up your details to personalise the app."
+                    font.pixelSize: 12
+                    color: Style.textSecondary
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                }
             }
         }
 
@@ -59,7 +114,6 @@ ScrollView {
 
                     ColumnLayout {
                         spacing: 4
-                        Layout.fillWidth: true
 
                         Text {
                             text: "Dark Mode"
@@ -74,6 +128,8 @@ ScrollView {
                             color: Style.textLight
                         }
                     }
+
+                    Item { Layout.fillWidth: true }
 
                     Switch {
                         checked: Style.isDarkMode
@@ -100,7 +156,6 @@ ScrollView {
 
                     ColumnLayout {
                         spacing: 4
-                        Layout.fillWidth: true
 
                         Text {
                             text: "Max Audit Log Rows Cap"
@@ -116,13 +171,15 @@ ScrollView {
                         }
                     }
 
+                    Item { Layout.fillWidth: true }
+
                     SpinBox {
                         id: maxRowsSpinBox
                         from: 50
                         to: 10000
                         stepSize: 50
-                        value: projectController.maxAuditRows
-                        onValueModified: projectController.setMaxAuditRows(value)
+                        value: dashboardController.maxAuditRows
+                        onValueModified: dashboardController.setMaxAuditRows(value)
 
                         contentItem: TextInput {
                             z: 2
@@ -191,7 +248,6 @@ ScrollView {
 
                     ColumnLayout {
                         spacing: 4
-                        Layout.fillWidth: true
 
                         Text {
                             text: "Database Management"
@@ -207,10 +263,12 @@ ScrollView {
                         }
                     }
 
+                    Item { Layout.fillWidth: true }
+
                     CustomButton {
                         text: "Purge Audit Logs"
                         variant: "secondary"
-                        onClicked: projectController.clearAuditLogs()
+                        onClicked: dashboardController.clearAuditLogs()
                     }
                 }
             }
