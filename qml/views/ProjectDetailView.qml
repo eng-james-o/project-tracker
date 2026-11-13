@@ -455,6 +455,18 @@ ScrollView {
                     projectDialog.setProject(root.project)
                     projectDialog.open()
                 }
+
+            CustomButton {
+                text: "Clone"
+                variant: "primary"
+                onClicked: {
+                    var clonedProject = templateController.clone_project(root.project.id)
+                    if (clonedProject) {
+                        projectDialog.setProject(clonedProject)
+                        projectDialog.open()
+                    }
+                }
+            }
             }
 
             CustomButton {
@@ -548,12 +560,11 @@ ScrollView {
                     }
                 }
 
-                Text {
-                    text: root.project.description || "No description provided."
+                MarkdownText {
+                    markdownText: root.project.description || "No description provided."
+                    Layout.fillWidth: true
                     font.pixelSize: 13
                     color: "#3C4043"
-                    wrapMode: Text.Wrap
-                    Layout.fillWidth: true
                 }
 
                 RowLayout {

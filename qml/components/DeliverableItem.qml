@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.DragAndDrop 1.0
 import "../"
 
 Rectangle {
@@ -9,18 +10,28 @@ Rectangle {
     signal toggled(bool completed)
     signal editClicked()
     signal deleted()
+    signal reorderRequested(int draggedDeliverableId, int targetDeliverableId)
 
     implicitHeight: 44
     radius: Style.radiusMedium
-    color: Style.background
+    color: dragActive ? Style.secondary : Style.background
     border.color: Style.border
     border.width: 1
+    property bool dragActive: false
 
     RowLayout {
         anchors.fill: parent
         anchors.leftMargin: 12
         anchors.rightMargin: 12
         spacing: 10
+
+        Keys.onPressed: function(event) {
+            if (event.key === Qt.Key_Space) {
+                chk.checked = !chk.checked
+                root.toggled(chk.checked)
+                event.accepted = true
+            }
+        }
 
         CustomCheckBox {
             id: chk
@@ -71,6 +82,42 @@ Rectangle {
             variant: "icon"
             iconSource: "../../assets/trash.svg"
             onClicked: root.deleted()
+        }
+    }
+
+    Drag.handler: DragHandler {
+        id: dragHandler
+        onActiveChanged: {
+            if (active) {
+                dragItem.source = root
+                dragItem.data = root.deliverable
+            }
+        }
+    }
+
+    Drag.source: DragObject {
+        id: dragItem
+        dragType: "DeliverableItem"
+    }
+
+    DropArea {
+        anchors.fill: parent
+        onEntered: function(drag) {
+            if (drag.hasFormat("DeliverableItem")) {
+                root.dragActive = true
+            }
+        }
+        onExited: function(drag) {
+            root.dragActive = false
+        }
+        onDropped: function(drag) {
+            if (drag.hasFormat("DeliverableItem")) {
+                var draggedDeliverable = drag.getDataAsVariant("DeliverableItem")
+                if (draggedDeliverable && draggedDeliverable.id !== root.deliverable.id) {
+                    root.reorderRequested(draggedDeliverable.id, root.deliverable.id)
+                }
+                root.dragActive = false
+            }
         }
     }
 }

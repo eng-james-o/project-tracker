@@ -88,6 +88,36 @@ ScrollView {
             }
         }
 
+        // Tag Filter Section
+        Rectangle {
+            Layout.fillWidth: true
+            visible: projectController.allTags.length > 0
+            implicitHeight: 48
+            radius: Style.radiusMedium
+            color: Style.surface
+            border.color: Style.border
+            border.width: 1
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 16
+                anchors.rightMargin: 16
+                spacing: 8
+
+                Text {
+                    text: "Tags:"
+                    font.pixelSize: 13
+                    color: Style.textSecondary
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                TagFilter {
+                    Layout.fillWidth: true
+                    tagController: projectController
+                }
+            }
+        }
+
         // Project Grid/List
         GridLayout {
             Layout.fillWidth: true
@@ -110,7 +140,7 @@ ScrollView {
         }
 
         Text {
-            text: "No projects match your search/filter criteria."
+            text: projectController.tagFilter.length > 0 ? "No projects match your tag filter." : "No projects match your search/filter criteria."
             font.pixelSize: 14
             color: Style.textLight
             Layout.alignment: Qt.AlignHCenter

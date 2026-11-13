@@ -30,6 +30,7 @@ ApplicationWindow {
     ProjectDialog {
         id: projectDialog
         anchors.centerIn: parent
+        tagController: tagController
         onAccepted: {
             if (isEdit) {
                 projectController.update_project(
@@ -47,7 +48,21 @@ ApplicationWindow {
                     companyId,
                     isPersonal
                 )
-            } else {
+            
+    // Command Palette (Ctrl+K)
+    CommandPalette {
+        id: commandPalette
+        projectController: projectController
+        templateController: templateController
+        profileController: profileController
+    }
+
+    // Shortcut for opening command palette
+    Shortcut {
+        sequence: "Ctrl+K"
+        onActivated: commandPalette.open()
+    }
+} else {
                 projectController.add_project(
                     projectTitle,
                     clientName,
@@ -65,6 +80,65 @@ ApplicationWindow {
             }
         }
     }
+    // Additional keyboard shortcuts
+    Shortcut {
+        sequence: "Ctrl+N"
+        onActivated: {
+            projectDialog.setProject(null)
+            projectDialog.open()
+        }
+    }
+
+    Shortcut {
+        sequence: "Ctrl+F"
+        onActivated: {
+            mainWindow.mainStack.currentIndex = 1
+            mainWindow.projectsView.searchBox.focus = true
+        }
+    }
+
+    Shortcut {
+        sequence: "Ctrl+1"
+        onActivated: mainWindow.mainStack.currentIndex = 0
+    }
+
+    Shortcut {
+        sequence: "Ctrl+2"
+        onActivated: mainWindow.mainStack.currentIndex = 1
+    }
+
+    Shortcut {
+        sequence: "Ctrl+3"
+        onActivated: mainWindow.mainStack.currentIndex = 2
+    }
+
+    Shortcut {
+        sequence: "Esc"
+        onActivated: {
+            // Close any open dialogs
+            projectDialog.close()
+            templateDialog.close()
+            commandPalette.close()
+        }
+    }
+
+    // Notification Center
+    NotificationCenter {
+        id: notificationCenter
+        notificationController: notificationController
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.topMargin: 60
+        visible: false
+    }
+
+    // AI Assistant Drawer
+    AIAssistantDrawer {
+        id: aiAssistantDrawer
+        aiController: aiController
+        projectController: projectController
+    }
+
 
     RowLayout {
         anchors.fill: parent
@@ -197,6 +271,36 @@ ApplicationWindow {
                         ToolTip.text: "Settings"
                         ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
                         ToolTip.delay: 300
+
+                    CustomButton {
+                        Layout.fillWidth: true
+                        text: mainWindow.isSidebarCollapsed ? "" : "Notifications"
+                        iconSource: "../../assets/outstanding.svg"
+                        variant: notificationController.notifications.length > 0 ? "primary" : "ghost"
+                        onClicked: notificationCenter.visible = !notificationCenter.visible
+                        ToolTip.text: "Notifications"
+                        ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
+                        ToolTip.delay: 300
+
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.right: parent.right
+                            width: 18
+                            height: 18
+                            radius: 9
+                            color: Style.danger
+                            visible: notificationController.notifications.length > 0
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: notificationController.notifications.length
+                                font.pixelSize: 10
+                                font.bold: true
+                                color: Style.surface
+                            }
+                        }
+                    }
+
                     }
                 }
 
@@ -214,6 +318,18 @@ ApplicationWindow {
                         projectDialog.open()
                     }
                 }
+
+                CustomButton {
+                    Layout.fillWidth: true
+                    text: mainWindow.isSidebarCollapsed ? "" : "AI Assistant"
+                    iconSource: "../../assets/outstanding.svg"
+                    variant: "ghost"
+                    onClicked: aiAssistantDrawer.open()
+                    ToolTip.text: "AI Assistant"
+                    ToolTip.visible: hovered && mainWindow.isSidebarCollapsed
+                    ToolTip.delay: 300
+                }
+
             }
         }
 
@@ -232,6 +348,7 @@ ApplicationWindow {
             }
 
             ProjectsView {
+            id: projectsView
                 onSelectProject: function(pid) {
                     mainStack.currentIndex = 2
                 }

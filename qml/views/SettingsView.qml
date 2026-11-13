@@ -77,7 +77,7 @@ ScrollView {
 
                 Text {
                     text: root.hasProfile
-                          ? root.profileDisplayName + (root.profile.email ? "  ·  " + root.profile.email : "")
+                          ? root.profileDisplayName + (root.profile.email ? "    " + root.profile.email : "")
                           : "No profile saved yet. Set up your details to personalise the app."
                     font.pixelSize: 12
                     color: Style.textSecondary
@@ -274,6 +274,165 @@ ScrollView {
             }
         }
 
+        // Templates Section
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: templatesCol.implicitHeight + 32
+            radius: Style.radiusLarge
+            color: Style.surface
+            border.color: Style.border
+
+            ColumnLayout {
+                id: templatesCol
+                anchors.fill: parent
+                anchors.margins: 16
+                spacing: 16
+
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    Text {
+                        text: "Project Templates"
+                        font.pixelSize: 16
+                        font.bold: true
+                        color: Style.textMain
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    CustomButton {
+                        text: "+ New Template"
+                        variant: "primary"
+                        onClicked: {
+                            templateDialog.setTemplate(null)
+                            templateDialog.open()
+                        }
+                    }
+                }
+
+                Text {
+                    text: "Create reusable project templates to quickly start new projects with predefined structures."
+                    font.pixelSize: 12
+                    color: Style.textSecondary
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: Style.border
+                }
+
+                // Template List
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    Repeater {
+                        model: templateController.templates
+
+                        delegate: Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 56
+                            radius: Style.radiusMedium
+                            color: Style.background
+                            border.color: Style.border
+                            border.width: 1
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                spacing: 12
+
+                                ColumnLayout {
+                                    spacing: 2
+
+                                    Text {
+                                        text: modelData.name
+                                        font.pixelSize: 14
+                                        font.bold: true
+                                        color: Style.textMain
+                                    }
+
+                                    Text {
+                                        text: modelData.description || "No description"
+                                        font.pixelSize: 11
+                                        color: Style.textSecondary
+                                        elide: Text.ElideRight
+                                    }
+                                }
+
+                                Item { Layout.fillWidth: true }
+
+                                RowLayout {
+                                    spacing: 8
+
+                                    CustomButton {
+                                        variant: "ghost"
+                                        iconSource: "../../assets/edit.svg"
+                                        ToolTip.text: "Edit Template"
+                                        onClicked: {
+                                            templateDialog.setTemplate(modelData)
+                                            templateDialog.open()
+                                        }
+                                    }
+
+                                    CustomButton {
+                                        variant: "ghost"
+                                        iconSource: "../../assets/trash.svg"
+                                        ToolTip.text: "Delete Template"
+                                        onClicked: templateController.delete_template(modelData.id)
+                                    }
+
+                                    CustomButton {
+                                        variant: "primary"
+                                        text: "Use Template"
+                                        onClicked: {
+                                            var projectData = templateController.clone_project_from_template(modelData.id)
+                                            if (projectData) {
+                                                projectDialog.setProject(projectData)
+                                                projectDialog.open()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        text: templateController.templates.length === 0 ? "No templates created yet." : ""
+                        font.pixelSize: 12
+                        color: Style.textLight
+                        Layout.alignment: Qt.AlignHCenter
+                    }
+                }
+            }
+        }
+
         Item { implicitHeight: 20 }
+    }
+
+    // Template Dialog
+    TemplateDialog {
+        id: templateDialog
+        anchors.centerIn: parent
+        onAccepted: {
+            if (isEdit) {
+                templateController.update_template(
+                    templateId,
+                    templateName,
+                    templateDescription,
+                    templateStructure
+                )
+            } else {
+                templateController.add_template(
+                    templateName,
+                    templateDescription,
+                    templateStructure
+                )
+            }
+        }
     }
 }
