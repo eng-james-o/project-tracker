@@ -6,6 +6,7 @@ import "../"
 Rectangle {
     id: root
     property var project: ({})
+    property var tagController: null
     signal clicked()
     signal statusChanged(string newStatus)
 
@@ -92,6 +93,24 @@ Rectangle {
             elide: Text.ElideRight
             maximumLineCount: 1
             Layout.fillWidth: true
+        }
+
+        // Tags Row
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            visible: root.project.tags_list && root.project.tags_list.length > 0
+
+            Repeater {
+                model: root.project.tags_list
+
+                TagBadge {
+                    Layout.preferredWidth: implicitWidth
+                    Layout.preferredHeight: implicitHeight
+                    text: modelData
+                    color: tagController && tagController.has_tag(modelData) ? tagController.get_tag_color(modelData) : Style.primary
+                }
+            }
         }
 
         RowLayout {

@@ -80,6 +80,7 @@ class DatabaseManager:
                 title TEXT NOT NULL,
                 completed INTEGER DEFAULT 0,
                 deadline TEXT DEFAULT '',
+                position INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
@@ -93,6 +94,7 @@ class DatabaseManager:
                 title TEXT NOT NULL,
                 completed INTEGER DEFAULT 0,
                 deadline TEXT DEFAULT '',
+                position INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
@@ -309,7 +311,7 @@ class DatabaseManager:
     def get_steps(self, project_id: int) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM steps WHERE project_id = ? ORDER BY id ASC", (project_id,))
+            cursor.execute("SELECT * FROM steps WHERE project_id = ? ORDER BY position ASC, id ASC", (project_id,))
             return [dict(r) for r in cursor.fetchall()]
 
     def update_step(self, step_id: int, title: str, deadline: str) -> bool:
@@ -384,7 +386,7 @@ class DatabaseManager:
     def get_deliverables(self, project_id: int) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM deliverables WHERE project_id = ? ORDER BY id ASC", (project_id,))
+            cursor.execute("SELECT * FROM deliverables WHERE project_id = ? ORDER BY position ASC, id ASC", (project_id,))
             return [dict(r) for r in cursor.fetchall()]
 
     def update_deliverable(self, deliverable_id: int, title: str, deadline: str) -> bool:
@@ -1075,8 +1077,109 @@ class DatabaseManager:
                 all_tags.extend(tags)
             return list(set(all_tags))
 
+    def get_projects_by_tags(self, tags: List[str]) -> List[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            projects = []
+            for tag in tags:
+                cursor.execute(
+                    "SELECT * FROM projects WHERE tags LIKE ? AND status = 'active'",
+                    (f"%,{tag},%",)
+                )
+                for row in cursor.fetchall():
+                    p = dict(row)
+                    p['tags_list'] = self._parse_tags(p.get('tags', ''))
+                    p['steps'] = self.get_steps(p['id'])
+                    p['deliverables'] = self.get_deliverables(p['id'])
+                    p['resources'] = self.get_resources(p['id'])
+                    p['price_remaining'] = p.get('price', 0) - p.get('paid_amount', 0)
+                    if p not in projects:
+                        projects.append(p)
+            return projects
+
     def get_available_companies(self) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM companies ORDER BY name ASC")
             return [dict(r) for r in cursor.fetchall()]
+
+    # --- Template Methods ---
+    def add_template(self, name: str, description: str, structure: str) -> int:
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO templates (name, description, structure, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+                (name, description, structure, now, now)
+            )
+            template_id = cursor.lastrowid
+            conn.commit()
+        return template_id
+
+    def get_all_templates(self) -> List[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM templates ORDER BY name ASC")
+            rows = cursor.fetchall()
+            return [dict(r) for r in rows]
+
+    def get_template_by_id(self, template_id: int) -> Optional[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM templates WHERE id = ?", (template_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def update_template(self, template_id: int, name: str, description: str, structure: str) -> bool:
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE templates SET name = ?, description = ?, structure = ?, updated_at = ? WHERE id = ?",
+                (name, description, structure, now, template_id)
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+
+    def delete_template(self, template_id: int) -> bool:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM templates WHERE id = ?", (template_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+
+    # --- Step and Deliverable Reordering ---
+
+    def get_step_by_id(self, step_id: int) -> Optional[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM steps WHERE id = ?", (step_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def get_deliverable_by_id(self, deliverable_id: int) -> Optional[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM deliverables WHERE id = ?", (deliverable_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def reorder_step(self, step_id: int, new_position: int) -> bool:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE steps SET position = ? WHERE id = ?",
+                (new_position, step_id)
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+
+    def reorder_deliverable(self, deliverable_id: int, new_position: int) -> bool:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE deliverables SET position = ? WHERE id = ?",
+                (new_position, deliverable_id)
+            )
+            conn.commit()
+            return cursor.rowcount > 0

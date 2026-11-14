@@ -217,3 +217,101 @@ class ProjectDetailsController(QObject):
         result = self.db.delete_resource(resource_id)
         self._refresh_all()
         return result
+
+    @Slot(int, int, result=bool)
+    def reorder_step(self, step_id: int, target_step_id: int) -> bool:
+        # Get all steps for the project
+        target_step = self.db.get_step_by_id(target_step_id)
+        if not target_step:
+            return False
+        
+        # Get all steps for the same project
+        steps = self.db.get_steps(target_step['project_id'])
+        
+        # Find the dragged step
+        dragged_step = None
+        for step in steps:
+            if step['id'] == step_id:
+                dragged_step = step
+                break
+        
+        if not dragged_step:
+            return False
+        
+        # Find the target step and its position
+        target_position = None
+        for i, step in enumerate(steps):
+            if step['id'] == target_step_id:
+                target_position = i
+                break
+        
+        if target_position is None:
+            return False
+        
+        # Reorder all steps
+        for i, step in enumerate(steps):
+            if step['id'] == step_id:
+                # This is the dragged step, give it the target position
+                self.db.reorder_step(step['id'], target_position)
+            elif i == target_position:
+                # This is the target step, move it to where the dragged step was
+                self.db.reorder_step(step['id'], steps.index(dragged_step))
+            else:
+                # Keep the same position
+                self.db.reorder_step(step['id'], i)
+        
+        self._refresh_all()
+        return True
+
+    @Slot(int, int, result=bool)
+    def reorder_deliverable(self, deliverable_id: int, target_deliverable_id: int) -> bool:
+        # Get all deliverables for the project
+        target_deliverable = self.db.get_deliverable_by_id(target_deliverable_id)
+        if not target_deliverable:
+            return False
+        
+        # Get all deliverables for the same project
+        deliverables = self.db.get_deliverables(target_deliverable['project_id'])
+        
+        # Find the dragged deliverable
+        dragged_deliverable = None
+        for deliverable in deliverables:
+            if deliverable['id'] == deliverable_id:
+                dragged_deliverable = deliverable
+                break
+        
+        if not dragged_deliverable:
+            return False
+        
+        # Find the target deliverable and its position
+        target_position = None
+        for i, deliverable in enumerate(deliverables):
+            if deliverable['id'] == target_deliverable_id:
+                target_position = i
+                break
+        
+        if target_position is None:
+            return False
+        
+        # Reorder all deliverables
+        for i, deliverable in enumerate(deliverables):
+            if deliverable['id'] == deliverable_id:
+                # This is the dragged deliverable, give it the target position
+                self.db.reorder_deliverable(deliverable['id'], target_position)
+            elif i == target_position:
+                # This is the target deliverable, move it to where the dragged deliverable was
+                self.db.reorder_deliverable(deliverable['id'], deliverables.index(dragged_deliverable))
+            else:
+                # Keep the same position
+                self.db.reorder_deliverable(deliverable['id'], i)
+        
+        self._refresh_all()
+        return True
+
+    @Slot(int, result=Dict)
+    def get_step_by_id(self, step_id: int) -> Optional[Dict]:
+        return self.db.get_step_by_id(step_id)
+
+    @Slot(int, result=Dict)
+    def get_deliverable_by_id(self, deliverable_id: int) -> Optional[Dict]:
+        return self.db.get_deliverable_by_id(deliverable_id)

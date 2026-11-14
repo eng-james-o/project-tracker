@@ -52,6 +52,18 @@ def main():
     engine.rootContext().setContextProperty(
         "profileController", controllers.profile_controller
     )
+    engine.rootContext().setContextProperty(
+        "tagController", controllers.tag_controller
+    )
+    engine.rootContext().setContextProperty(
+        "templateController", controllers.template_controller
+    )
+    engine.rootContext().setContextProperty(
+        "notificationController", controllers.notification_controller
+    )
+    engine.rootContext().setContextProperty(
+        "aiController", controllers.ai_controller
+    )
 
     main_qml = os.path.join(app_dir, "qml", "main.qml")
     engine.load(main_qml)

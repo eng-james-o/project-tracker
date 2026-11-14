@@ -6,6 +6,28 @@ A clean, modern, offline-first Project Tracker desktop application built with **
 
 ---
 
+## Screenshots
+
+| Dashboard | Projects |
+|-----------|----------|
+| ![Dashboard](docs/screenshots/dashboard_view.png) | ![Projects](docs/screenshots/projects_view.png) |
+
+| Project Detail | Project Board |
+|----------------|---------------|
+| ![Project Detail](docs/screenshots/project_detail_view.png) | ![Project Board](docs/screenshots/project_board_view.png) |
+
+| Goals | Audit Log |
+|-------|-----------|
+| ![Goals](docs/screenshots/goals_view.png) | ![Audit Log](docs/screenshots/audit_log_view.png) |
+
+| Settings | Onboarding |
+|----------|------------|
+| ![Settings](docs/screenshots/settings_view.png) | ![Onboarding](docs/screenshots/onboarding_view.png) |
+
+> **Note**: All screenshots are captured at the application's default window size of **1100x750 pixels**.
+
+---
+
 ## Features
 
 - **Dashboard Overview**: See high-level project metrics, active projects, and upcoming close deadlines in one place.
@@ -23,33 +45,51 @@ A clean, modern, offline-first Project Tracker desktop application built with **
 
 ```text
 .
-├── main.py                    # Application entry point
-├── requirements.txt           # Python dependencies
-├── README.md                  # Project documentation
-├── CHANGELOG.md               # Version history and changes
-├── CONTRIBUTING.md            # Guidelines for contributing & conventional commits
-├── db/
-│   └── database.py            # SQLite database schema and CRUD operations
-├── models/
-│   └── project_controller.py  # PySide6 controller (Signals, Slots & Properties for QML)
-├── qml/
-│   ├── main.qml               # Main window layout and sidebar navigation
-│   ├── components/            # Reusable QML components
-│   │   ├── CustomButton.qml
-│   │   ├── CustomTextField.qml
-│   │   ├── DeliverableItem.qml
-│   │   ├── ProjectCard.qml
-│   │   ├── ProjectDialog.qml
-│   │   ├── ResourceItem.qml
-│   │   ├── StatCard.qml
-│   │   ├── StatusBadge.qml
-│   │   └── StepItem.qml
-│   └── views/                 # View screens
-│       ├── DashboardView.qml
-│       ├── ProjectsView.qml
-│       └── ProjectDetailView.qml
-└── tests/
-    └── test_project_tracker.py # Unit tests for DB and Controller
+ main.py                    # Application entry point
+ requirements.txt           # Python dependencies
+ README.md                  # Project documentation
+ CHANGELOG.md               # Version history and changes
+ CONTRIBUTING.md            # Guidelines for contributing & conventional commits
+ qtquickcontrols2.conf      # Qt Quick Controls 2 configuration
+ db/
+    database.py            # SQLite database schema and CRUD operations
+ models/
+    project_controller.py  # PySide6 controller (Signals, Slots & Properties for QML)
+ qml/
+    main.qml               # Main window layout and sidebar navigation
+    Style.qml              # Global style singleton
+    style/                 # Custom Qt Quick Controls 2 templates
+       Button.qml
+       CheckBox.qml
+       ComboBox.qml
+       Slider.qml
+       TextField.qml
+       qmldir
+    components/            # Reusable QML components
+       CustomButton.qml
+       CustomTextField.qml
+       DeliverableItem.qml
+       ProjectCard.qml
+       ProjectDialog.qml
+       ResourceItem.qml
+       StatCard.qml
+       StatusBadge.qml
+       StepItem.qml
+       common/              # Common reusable components
+           Card.qml
+           EmptyState.qml
+           LoadingIndicator.qml
+           Tooltip.qml
+    views/                 # View screens
+        DashboardView.qml
+        ProjectsView.qml
+        ProjectBoardView.qml
+        GoalsView.qml
+        AuditLogView.qml
+        SettingsView.qml
+        OnboardingView.qml
+ tests/
+     test_project_tracker.py # Unit tests for DB and Controller
 ```
 
 ---
