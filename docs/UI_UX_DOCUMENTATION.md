@@ -77,7 +77,6 @@ The sidebar navigation is organized into **5 logical groups** to reduce cognitiv
 ├─────────────────────────────────────┤
 │  ⚙️  SETTINGS                         │
 └─────────────────────────────────────┘
-     [↑ Back to Top]
 ```
 
 #### Group Index Mapping
@@ -92,33 +91,7 @@ The sidebar navigation is organized into **5 logical groups** to reduce cognitiv
 
 ### Progressive Disclosure
 
-**All groups are collapsed by default** to present a clean, uncluttered interface on first launch.
-
-#### Expand/Collapse Behavior
-
-- **Click on group header**: Toggles the expanded state of that group
-- **Expand indicator**: Right-pointing arrow (▶) rotates 90° to down-pointing (▼) when expanded
-- **Auto-expand**: When sidebar is not collapsed, the **Projects group automatically expands** to ensure core functionality is always accessible
-- **Single group open**: Only one group can be expanded at a time (others auto-collapse)
-
-#### Implementation Details
-
-```qml
-// SidebarSettings.qml - State persistence
-SidebarSettings {
-    id: sidebarSettings
-    property bool projectsExpanded: false  // Default: collapsed
-    property bool planningExpanded: false  // Default: collapsed
-    property bool managementExpanded: false // Default: collapsed
-    property bool toolsExpanded: false     // Default: collapsed
-}
-
-// Group header click handler
-onClicked: sidebarSettings.saveProjectsExpanded(!sidebarSettings.projectsExpanded)
-
-// Group items visibility
-visible: sidebarSettings.projectsExpanded || !mainWindow.isSidebarCollapsed
-```
+On first launch, Projects is open. Selecting another group opens its children and closes the previous group. Selecting the open group closes it. Settings is always available.
 
 ### Group Highlighting
 
@@ -172,109 +145,15 @@ color: mainWindow.isSidebarCollapsed ? "transparent" :
 
 ### State Persistence
 
-The expanded/collapsed state of each navigation group is **automatically saved and restored** between application sessions using Qt's `Qt.labs.settings 1.0` module.
-
-#### Implementation (`SidebarSettings.qml`)
-
-```qml
-import QtQuick
-import QtQuick.Controls
-import Qt.labs.settings 1.0
-
-QtObject {
-    id: root
-    
-    // Navigation group expanded states
-    property bool projectsExpanded: false
-    property bool planningExpanded: false
-    property bool managementExpanded: false
-    property bool toolsExpanded: false
-    
-    readonly property Settings settings: Settings {
-        category: "sidebar"
-    }
-    
-    Component.onCompleted: {
-        // Load saved state from QSettings
-        projectsExpanded = settings.value("projectsExpanded", false)
-        planningExpanded = settings.value("planningExpanded", false)
-        managementExpanded = settings.value("managementExpanded", false)
-        toolsExpanded = settings.value("toolsExpanded", false)
-    }
-    
-    function saveProjectsExpanded(value) {
-        projectsExpanded = value
-        settings.setValue("projectsExpanded", value)
-    }
-    
-    function savePlanningExpanded(value) {
-        planningExpanded = value
-        settings.setValue("planningExpanded", value)
-    }
-    
-    function saveManagementExpanded(value) {
-        managementExpanded = value
-        settings.setValue("managementExpanded", value)
-    }
-    
-    function saveToolsExpanded(value) {
-        toolsExpanded = value
-        settings.setValue("toolsExpanded", value)
-    }
-}
-```
-
-**Storage Location**: Settings are stored in the platform's native settings system (Registry on Windows, plist on macOS, INI file on Linux).
+The sidebar remembers the open group across sessions, including the choice to close all groups. Existing installations with separate expansion flags restore one open group.
 
 ### Back to Top Button
 
-A "Back to Top" button is provided at the bottom of the sidebar for quick navigation when the sidebar content is scrolled.
-
-#### Features
-
-- **Location**: Bottom of the sidebar
-- **Visibility**: Only visible when sidebar is NOT collapsed
-- **Icon**: Up arrow (↑) rotated -90° from the arrow-left.svg icon
-- **Action**: Scrolls the sidebar `Flickable` to the top
-
-#### Implementation
-
-```qml
-CustomButton {
-    Layout.fillWidth: true
-    text: mainWindow.isSidebarCollapsed ? "" : "Back to Top"
-    iconSource: "../../assets/arrow-left.svg"
-    rotation: -90  // Points upward
-    variant: "ghost"
-    visible: !mainWindow.isSidebarCollapsed
-    onClicked: sidebarFlick.contentY = 0
-    ToolTip.text: "Back to Top"
-    ToolTip.delay: 300
-}
-```
+While the current page scrolls below its starting position, a circular up-arrow floats 20 pixels above the bottom edge, horizontally centered over the content pane. It disappears after scrolling stops. Clicking it returns that page to the top. Sidebar scrolling is independent.
 
 ### Sidebar Scrollability
 
-The sidebar is wrapped in a `Flickable` component to enable scrolling when the window is resized or when many items are present.
-
-```qml
-Flickable {
-    id: sidebarFlick
-    Layout.fillHeight: true
-    implicitWidth: mainWindow.isSidebarCollapsed ? 64 : 220
-    contentHeight: sidebarContent.height
-    clip: true
-
-    Rectangle {
-        id: sidebarContent
-        width: parent.width
-        color: Style.surface
-        border.color: Style.border
-        border.width: 1
-        // Contains the ColumnLayout with all navigation items
-    }
-}
-```
+The navigation column determines its required height. A vertically scrollable sidebar keeps every destination reachable in shorter windows.
 
 ---
 
@@ -1353,7 +1232,7 @@ This documentation covers all the UI/UX features implemented in the Project Trac
 1. **Grouped Navigation**
    - 5 logical groups (Projects, Planning, Management, Tools, Settings)
    - Progressive disclosure with expand/collapse
-   - Groups collapsed by default
+   - Projects open by default on first launch
    - Color-coded highlighting for each group
 
 2. **State Persistence**

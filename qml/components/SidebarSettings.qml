@@ -1,46 +1,33 @@
 import QtQuick
-import QtQuick.Controls
 import Qt.labs.settings 1.0
 
-// Singleton for managing sidebar settings
 QtObject {
-    id: root
-    
-    // Navigation group expanded states
-    property bool projectsExpanded: false
-    property bool planningExpanded: false
-    property bool managementExpanded: false
-    property bool toolsExpanded: false
-    
     readonly property Settings settings: Settings {
         category: "sidebar"
+        property string expandedGroup: ""
     }
-    
+
+    property string group: "projects"
+    readonly property bool projectsExpanded: group === "projects"
+    readonly property bool planningExpanded: group === "planning"
+    readonly property bool managementExpanded: group === "management"
+    readonly property bool toolsExpanded: group === "tools"
+
     Component.onCompleted: {
-        // Load saved state
-        projectsExpanded = settings.value("projectsExpanded", false)
-        planningExpanded = settings.value("planningExpanded", false)
-        managementExpanded = settings.value("managementExpanded", false)
-        toolsExpanded = settings.value("toolsExpanded", false)
+        if (settings.expandedGroup) {
+            group = settings.expandedGroup
+        } else {
+            for (const previous of ["planning", "management", "tools", "projects"]) {
+                if (settings.value(previous + "Expanded", false)) {
+                    group = previous
+                    break
+                }
+            }
+        }
     }
-    
-    function saveProjectsExpanded(value) {
-        projectsExpanded = value
-        settings.setValue("projectsExpanded", value)
-    }
-    
-    function savePlanningExpanded(value) {
-        planningExpanded = value
-        settings.setValue("planningExpanded", value)
-    }
-    
-    function saveManagementExpanded(value) {
-        managementExpanded = value
-        settings.setValue("managementExpanded", value)
-    }
-    
-    function saveToolsExpanded(value) {
-        toolsExpanded = value
-        settings.setValue("toolsExpanded", value)
+
+    function toggle(name) {
+        group = group === name ? "none" : name
+        settings.expandedGroup = group
     }
 }

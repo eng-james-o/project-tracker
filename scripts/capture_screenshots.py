@@ -5,9 +5,9 @@ import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from PySide6.QtCore import QMetaObject, QObject, QSettings
+from PySide6.QtCore import QMetaObject, QObject, QPointF, QSettings, Qt
 from PySide6.QtWidgets import QApplication
-from PySide6.QtQuick import QQuickWindow
+from PySide6.QtQuick import QQuickItem, QQuickWindow
 from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtTest import QTest
 
@@ -21,6 +21,16 @@ def capture(window: QQuickWindow, directory, name):
     image = window.grabWindow()
     if image.isNull() or not image.save(str(directory / f"{name}_view.png")):
         raise RuntimeError(f"Could not capture {name}")
+
+
+def click_sidebar(window, label):
+    for button in window.findChildren(QQuickItem):
+        if button.property("text") == label and button.isVisible() and button.inherits("QQuickAbstractButton"):
+            center = button.mapToScene(QPointF(button.width() / 2, button.height() / 2))
+            QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, center.toPoint())
+            QTest.qWait(60)
+            return
+    raise RuntimeError(f"Sidebar button is unavailable: {label}")
 
 
 def main():
@@ -52,10 +62,23 @@ def main():
             raise RuntimeError("Onboarding did not open")
         capture(window, output, "onboarding")
         QMetaObject.invokeMethod(onboarding, "close")
-        for index, name in enumerate(("dashboard", "projects", "project_detail",
-                                      "project_board", "goals", "audit_log", "settings")):
-            if not stack.setProperty("currentIndex", index):
-                raise RuntimeError(f"Could not navigate to {name}")
+        QTest.qWait(200)
+        routes = [
+            ("dashboard", 0, ["Dashboard"]),
+            ("projects", 1, ["All Projects"]),
+            ("project_detail", 2, []),
+            ("project_board", 3, ["Project Board"]),
+            ("goals", 4, ["Planning", "Goals"]),
+            ("audit_log", 5, ["Management", "Activity & Audit"]),
+            ("settings", 6, ["Settings"]),
+        ]
+        for name, index, buttons in routes:
+            for label in buttons:
+                click_sidebar(window, label)
+            if name == "project_detail":
+                stack.setProperty("currentIndex", index)
+            if stack.property("currentIndex") != index:
+                raise RuntimeError(f"Sidebar navigation failed: {name}")
             capture(window, output, name)
         window.close()
         del engine, controllers

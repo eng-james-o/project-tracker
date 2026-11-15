@@ -156,6 +156,7 @@ ApplicationWindow {
             Layout.fillHeight: true
             implicitWidth: mainWindow.isSidebarCollapsed ? 64 : 220
             contentHeight: sidebarContent.height
+            flickableDirection: Flickable.VerticalFlick
             clip: true
 
             Behavior on implicitWidth {
@@ -164,12 +165,14 @@ ApplicationWindow {
 
             Rectangle {
                 id: sidebarContent
-                width: parent.width
+                width: sidebarFlick.width
+                height: Math.max(sidebarFlick.height, navigation.implicitHeight + 40)
                 color: Style.surface
                 border.color: Style.border
                 border.width: 1
 
                 ColumnLayout {
+                    id: navigation
                     anchors.fill: parent
                     anchors.topMargin: 20
                     anchors.leftMargin: mainWindow.isSidebarCollapsed ? 10 : 16
@@ -223,7 +226,7 @@ ApplicationWindow {
                     // Group header with highlight
                     Rectangle {
                         Layout.fillWidth: true
-                        height: 40
+                        Layout.preferredHeight: 40
                         color: mainWindow.isSidebarCollapsed ? "transparent" : 
                                (mainStack.currentIndex === 0 || mainStack.currentIndex === 1 || 
                                 mainStack.currentIndex === 2 || mainStack.currentIndex === 3) ? 
@@ -235,7 +238,7 @@ ApplicationWindow {
                             text: mainWindow.isSidebarCollapsed ? "" : "Projects"
                             iconSource: "../../assets/projects.svg"
                             variant: "ghost"
-                            onClicked: sidebarSettings.saveProjectsExpanded(!sidebarSettings.projectsExpanded)
+                            onClicked: sidebarSettings.toggle("projects")
                             ToolTip.text: "Projects - Dashboard, All Projects, Project Board"
                             ToolTip.delay: 300
 
@@ -243,8 +246,11 @@ ApplicationWindow {
                             Image {
                                 anchors.right: parent.right
                                 anchors.rightMargin: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                sourceSize.width: 14
+                                sourceSize.height: 14
                                 source: "../assets/arrow-left.svg"
-                                rotation: sidebarSettings.projectsExpanded ? 90 : 0
+                                rotation: sidebarSettings.projectsExpanded ? -90 : 180
                                 visible: !mainWindow.isSidebarCollapsed
                             }
                         }
@@ -254,7 +260,7 @@ ApplicationWindow {
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 4
-                        visible: sidebarSettings.projectsExpanded || !mainWindow.isSidebarCollapsed
+                        visible: sidebarSettings.projectsExpanded
 
                         CustomButton {
                             Layout.fillWidth: true
@@ -304,7 +310,7 @@ ApplicationWindow {
                 // Divider between groups
                 Rectangle {
                     Layout.fillWidth: true
-                    height: 1
+                    Layout.preferredHeight: 1
                     color: Style.border
                     visible: !mainWindow.isSidebarCollapsed
                 }
@@ -317,7 +323,7 @@ ApplicationWindow {
                     // Group header with highlight
                     Rectangle {
                         Layout.fillWidth: true
-                        height: 40
+                        Layout.preferredHeight: 40
                         color: mainWindow.isSidebarCollapsed ? "transparent" : 
                                mainStack.currentIndex === 4 ? 
                                Qt.alpha(Style.success, 0.1) : "transparent"
@@ -328,15 +334,18 @@ ApplicationWindow {
                             text: mainWindow.isSidebarCollapsed ? "" : "Planning"
                             iconSource: "../../assets/goals.svg"
                             variant: "ghost"
-                            onClicked: sidebarSettings.savePlanningExpanded(!sidebarSettings.planningExpanded)
+                            onClicked: sidebarSettings.toggle("planning")
                             ToolTip.text: "Planning - Goals and objectives"
                             ToolTip.delay: 300
 
                             Image {
                                 anchors.right: parent.right
                                 anchors.rightMargin: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                sourceSize.width: 14
+                                sourceSize.height: 14
                                 source: "../assets/arrow-left.svg"
-                                rotation: sidebarSettings.planningExpanded ? 90 : 0
+                                rotation: sidebarSettings.planningExpanded ? -90 : 180
                                 visible: !mainWindow.isSidebarCollapsed
                             }
                         }
@@ -363,7 +372,7 @@ ApplicationWindow {
                 // Divider
                 Rectangle {
                     Layout.fillWidth: true
-                    height: 1
+                    Layout.preferredHeight: 1
                     color: Style.border
                     visible: !mainWindow.isSidebarCollapsed
                 }
@@ -376,7 +385,7 @@ ApplicationWindow {
                     // Group header with highlight
                     Rectangle {
                         Layout.fillWidth: true
-                        height: 40
+                        Layout.preferredHeight: 40
                         color: mainWindow.isSidebarCollapsed ? "transparent" : 
                                mainStack.currentIndex === 5 ? 
                                Qt.alpha(Style.warning, 0.1) : "transparent"
@@ -387,15 +396,18 @@ ApplicationWindow {
                             text: mainWindow.isSidebarCollapsed ? "" : "Management"
                             iconSource: "../../assets/audit.svg"
                             variant: "ghost"
-                            onClicked: sidebarSettings.saveManagementExpanded(!sidebarSettings.managementExpanded)
+                            onClicked: sidebarSettings.toggle("management")
                             ToolTip.text: "Management - Activity and audit logs"
                             ToolTip.delay: 300
 
                             Image {
                                 anchors.right: parent.right
                                 anchors.rightMargin: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                sourceSize.width: 14
+                                sourceSize.height: 14
                                 source: "../assets/arrow-left.svg"
-                                rotation: sidebarSettings.managementExpanded ? 90 : 0
+                                rotation: sidebarSettings.managementExpanded ? -90 : 180
                                 visible: !mainWindow.isSidebarCollapsed
                             }
                         }
@@ -422,7 +434,7 @@ ApplicationWindow {
                 // Divider
                 Rectangle {
                     Layout.fillWidth: true
-                    height: 1
+                    Layout.preferredHeight: 1
                     color: Style.border
                     visible: !mainWindow.isSidebarCollapsed
                 }
@@ -435,7 +447,7 @@ ApplicationWindow {
                     // Group header with highlight
                     Rectangle {
                         Layout.fillWidth: true
-                        height: 40
+                        Layout.preferredHeight: 40
                         color: mainWindow.isSidebarCollapsed ? "transparent" : 
                                mainStack.currentIndex === 7 || mainStack.currentIndex === 8 ? 
                                Qt.alpha(Style.info, 0.1) : "transparent"
@@ -446,15 +458,18 @@ ApplicationWindow {
                             text: mainWindow.isSidebarCollapsed ? "" : "Tools"
                             iconSource: "../../assets/package.svg"
                             variant: "ghost"
-                            onClicked: sidebarSettings.saveToolsExpanded(!sidebarSettings.toolsExpanded)
+                            onClicked: sidebarSettings.toggle("tools")
                             ToolTip.text: "Tools - AI Assistant and Notifications"
                             ToolTip.delay: 300
 
                             Image {
                                 anchors.right: parent.right
                                 anchors.rightMargin: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                sourceSize.width: 14
+                                sourceSize.height: 14
                                 source: "../assets/arrow-left.svg"
-                                rotation: sidebarSettings.toolsExpanded ? 90 : 0
+                                rotation: sidebarSettings.toolsExpanded ? -90 : 180
                                 visible: !mainWindow.isSidebarCollapsed
                             }
                         }
@@ -509,7 +524,7 @@ ApplicationWindow {
                 // Divider
                 Rectangle {
                     Layout.fillWidth: true
-                    height: 1
+                    Layout.preferredHeight: 1
                     color: Style.border
                     visible: !mainWindow.isSidebarCollapsed
                 }
@@ -517,7 +532,7 @@ ApplicationWindow {
                 // ===== SETTINGS (Always visible) =====
                 Rectangle {
                     Layout.fillWidth: true
-                    height: 40
+                    Layout.preferredHeight: 40
                     color: mainWindow.isSidebarCollapsed ? "transparent" : 
                            mainStack.currentIndex === 6 ? 
                            Qt.alpha(Style.secondary, 0.1) : "transparent"
@@ -534,32 +549,21 @@ ApplicationWindow {
                     }
                 }
 
-                // Fill space and add back to top button
                 Item { Layout.fillHeight: true }
-
-                // Back to top button
-                CustomButton {
-                    Layout.fillWidth: true
-                    text: mainWindow.isSidebarCollapsed ? "" : "Back to Top"
-                    iconSource: "../../assets/arrow-left.svg"
-                    rotation: -90
-                    variant: "ghost"
-                    visible: !mainWindow.isSidebarCollapsed
-                    onClicked: sidebarFlick.contentY = 0
-                    ToolTip.text: "Back to Top"
-                    ToolTip.delay: 300
-                }
 
             }
         }
         }
 
         // Main StackView / Content Area
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
         StackLayout {
             id: mainStack
             objectName: "mainStack"
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+            anchors.fill: parent
             currentIndex: 0
 
             DashboardView {
@@ -590,6 +594,37 @@ ApplicationWindow {
             SettingsView {
                 onEditProfileRequested: onboardingView.openForEdit()
             }
+        }
+
+        RoundButton {
+            id: scrollTop
+            objectName: "scrollToTop"
+            readonly property var page: mainStack.children[mainStack.currentIndex]
+            readonly property var viewport: page ? page.contentItem : null
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 20
+            width: 40
+            height: 40
+            radius: width / 2
+            z: 10
+            text: "↑"
+            font.pixelSize: 22
+            Accessible.name: "Back to top"
+            visible: viewport && !viewport.atYBeginning && (viewport.moving || activity.running || down)
+            onViewportChanged: activity.stop()
+            onClicked: {
+                viewport.cancelFlick()
+                viewport.contentY = viewport.originY
+                activity.stop()
+            }
+            // Wheel steps and scrollbar drags can change contentY without a flick.
+            Timer { id: activity; interval: 350 }
+            Connections {
+                target: scrollTop.viewport
+                function onContentYChanged() { activity.restart() }
+            }
+        }
         }
     }
 }
