@@ -108,7 +108,7 @@ Rectangle {
                     Layout.preferredWidth: implicitWidth
                     Layout.preferredHeight: implicitHeight
                     text: modelData
-                    color: tagController && tagController.has_tag(modelData) ? tagController.get_tag_color(modelData) : Style.primary
+                    badgeColor: tagController && tagController.has_tag(modelData) ? tagController.get_tag_color(modelData) : Style.primary
                 }
             }
         }

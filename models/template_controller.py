@@ -69,7 +69,7 @@ class TemplateController(QObject):
         self.refresh_templates()
         return result
 
-    @Slot(int, result=Dict[str, Any])
+    @Slot(int, result="QVariantMap")
     def clone_project_from_template(self, template_id: int) -> Dict[str, Any]:
         template = self.db.get_template_by_id(template_id)
         if template:
@@ -95,7 +95,7 @@ class TemplateController(QObject):
             return project_data
         return {}
 
-    @Slot(int, result=Dict[str, Any])
+    @Slot(int, result="QVariantMap")
     def clone_project(self, project_id: int) -> Dict[str, Any]:
         project = self.db.get_project_by_id(project_id)
         if project:

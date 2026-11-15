@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import QtQuick.DragAndDrop 1.0
 import "../"
 
 Rectangle {
@@ -17,7 +16,7 @@ Rectangle {
     color: dragActive ? Style.secondary : Style.background
     border.color: Style.border
     border.width: 1
-    property bool dragActive: false
+    readonly property bool dragActive: dropZone.containsDrag
 
     RowLayout {
         anchors.fill: parent
@@ -85,39 +84,28 @@ Rectangle {
         }
     }
 
-    Drag.handler: DragHandler {
-        id: dragHandler
+    DragHandler {
+        id: handler
+        target: null
         onActiveChanged: {
-            if (active) {
-                dragItem.source = root
-                dragItem.data = root.deliverable
-            }
+            if (active) marker.Drag.start()
+            else marker.Drag.drop()
         }
     }
-
-    Drag.source: DragObject {
-        id: dragItem
-        dragType: "DeliverableItem"
+    Item {
+        id: marker
+        x: handler.centroid.position.x
+        y: handler.centroid.position.y
+        Drag.source: root
+        Drag.keys: ["DeliverableItem"]
     }
-
     DropArea {
+        id: dropZone
         anchors.fill: parent
-        onEntered: function(drag) {
-            if (drag.hasFormat("DeliverableItem")) {
-                root.dragActive = true
-            }
-        }
-        onExited: function(drag) {
-            root.dragActive = false
-        }
-        onDropped: function(drag) {
-            if (drag.hasFormat("DeliverableItem")) {
-                var draggedDeliverable = drag.getDataAsVariant("DeliverableItem")
-                if (draggedDeliverable && draggedDeliverable.id !== root.deliverable.id) {
-                    root.reorderRequested(draggedDeliverable.id, root.deliverable.id)
-                }
-                root.dragActive = false
-            }
+        keys: ["DeliverableItem"]
+        onDropped: function(event) {
+            if (event.source !== root)
+                root.reorderRequested(event.source.deliverable.id, root.deliverable.id)
         }
     }
 }

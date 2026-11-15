@@ -10,23 +10,23 @@ Popup {
     modal: true
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-    
+
     property var projectController: null
     property var templateController: null
     property var profileController: null
-    
+
     background: Rectangle {
         color: Style.surface
         border.color: Style.border
         border.width: 1
         radius: Style.radiusLarge
     }
-    
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 16
         spacing: 12
-        
+
         // Search input
         CustomTextField {
             id: searchInput
@@ -34,7 +34,7 @@ Popup {
             placeholderText: "Type a command or search... (Ctrl+K)"
             onTextChanged: filterCommands()
             focus: true
-            
+
             Keys.onPressed: function(event) {
                 if (event.key === Qt.Key_Down) {
                     listView.focus = true
@@ -52,13 +52,13 @@ Popup {
                 }
             }
         }
-        
+
         // Results list
         ScrollView {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            
+
             ListView {
                 id: listView
                 width: parent.width
@@ -69,7 +69,7 @@ Popup {
                     command: modelData
                     onSelected: executeCommand(index)
                 }
-                
+
                 Keys.onPressed: function(event) {
                     if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
                         executeCommand(currentIndex)
@@ -79,7 +79,7 @@ Popup {
             }
         }
     }
-    
+
     property list<string> allCommands: [
         "New Project",
         "All Projects",
@@ -92,24 +92,24 @@ Popup {
         "Profile",
         "Search Projects"
     ]
-    
+
     property list<var> filteredCommands: []
-    
+
     function filterCommands() {
         var query = searchInput.text.toLowerCase()
         if (!query) {
             filteredCommands = allCommands
             return
         }
-        
+
         filteredCommands = allCommands.filter(function(cmd) {
             return cmd.toLowerCase().includes(query)
         })
     }
-    
+
     function executeCommand(index) {
         var command = filteredCommands[index]
-        
+
         switch (command) {
             case "New Project":
                 projectDialog.setProject(null)
@@ -145,42 +145,42 @@ Popup {
                 mainWindow.projectsView.searchBox.focus = true
                 break
         }
-        
+
         root.close()
     }
-    
+
     Component.onCompleted: {
         searchInput.forceActiveFocus()
         filterCommands()
     }
-}
 
-// Command item component
-component CommandItem: Rectangle {
-    id: root
-    property var command: ""
-    signal selected()
-    
-    height: 40
-    color: "transparent"
-    
-    Text {
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: 12
-        text: command
-        font.pixelSize: Style.fontSizeMedium
-        color: Style.textMain
-    }
-    
-    MouseArea {
-        anchors.fill: parent
-        hoverEnabled: true
-        onClicked: root.selected()
-        
-        Rectangle {
+    // Command item component
+    component CommandItem: Rectangle {
+        id: root
+        property var command: ""
+        signal selected()
+
+        height: 40
+        color: "transparent"
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.leftMargin: 12
+            text: command
+            font.pixelSize: Style.fontSizeMedium
+            color: Style.textMain
+        }
+
+        MouseArea {
             anchors.fill: parent
-            color: root.hovered ? Style.secondary : "transparent"
-            radius: Style.radiusSmall
+            hoverEnabled: true
+            onClicked: root.selected()
+
+            Rectangle {
+                anchors.fill: parent
+                color: root.hovered ? Style.secondary : "transparent"
+                radius: Style.radiusSmall
+            }
         }
     }
 }

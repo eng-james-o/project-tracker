@@ -52,8 +52,8 @@ Drawer {
             CustomComboBox {
                 Layout.fillWidth: true
                 model: aiController ? aiController.availableProviders : []
-                currentText: aiController ? aiController.currentProvider : "groq"
-                onCurrentTextChanged: aiController ? aiController.setProvider(currentText) : null
+                currentIndex: model.indexOf(aiController ? aiController.currentProvider : "groq")
+                onActivated: aiController ? aiController.setProvider(currentText) : null
             }
         }
         

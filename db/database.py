@@ -180,7 +180,12 @@ class DatabaseManager:
             );
             """)
 
-            # Companies Table (for user's companies)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS templates (
+                id INTEGER PRIMARY KEY, name TEXT NOT NULL, description TEXT,
+                structure TEXT NOT NULL, created_at TEXT, updated_at TEXT
+            )
+            """)
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS companies (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

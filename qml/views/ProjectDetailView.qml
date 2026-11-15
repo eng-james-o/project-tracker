@@ -563,8 +563,6 @@ ScrollView {
                 MarkdownText {
                     markdownText: root.project.description || "No description provided."
                     Layout.fillWidth: true
-                    font.pixelSize: 13
-                    color: "#3C4043"
                 }
 
                 RowLayout {

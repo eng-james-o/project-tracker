@@ -308,10 +308,10 @@ class ProjectDetailsController(QObject):
         self._refresh_all()
         return True
 
-    @Slot(int, result=Dict)
-    def get_step_by_id(self, step_id: int) -> Optional[Dict]:
+    @Slot(int, result="QVariantMap")
+    def get_step_by_id(self, step_id: int) -> Optional[dict]:
         return self.db.get_step_by_id(step_id)
 
-    @Slot(int, result=Dict)
-    def get_deliverable_by_id(self, deliverable_id: int) -> Optional[Dict]:
+    @Slot(int, result="QVariantMap")
+    def get_deliverable_by_id(self, deliverable_id: int) -> Optional[dict]:
         return self.db.get_deliverable_by_id(deliverable_id)

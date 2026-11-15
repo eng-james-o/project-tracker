@@ -5,17 +5,16 @@ import "../"
 Rectangle {
     id: root
     property string text: ""
-    property string color: Style.primary
+    property color badgeColor: Style.primary
     property bool clickable: false
-    property int radius: Style.radiusSmall
     
     implicitWidth: content.width + 24
     implicitHeight: 24
     
-    color: Qt.alpha(root.color, 0.12)
-    border.color: root.color
+    color: Qt.alpha(root.badgeColor, 0.12)
+    border.color: root.badgeColor
     border.width: 1
-    radius: root.radius
+    radius: Style.radiusSmall
     
     Text {
         id: content
@@ -23,7 +22,7 @@ Rectangle {
         text: root.text
         font.pixelSize: Style.fontSizeSmall
         font.bold: true
-        color: root.color
+        color: root.badgeColor
         elide: Text.ElideRight
     }
     

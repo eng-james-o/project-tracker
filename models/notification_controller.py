@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
 
 from PySide6.QtCore import QObject, Property, Signal, Slot, QTimer, QDateTime
-from PySide6.QtGui import QSystemTrayIcon, QIcon
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon
 
 from db.database import DatabaseManager
 
@@ -28,7 +28,9 @@ class NotificationController(QObject):
         self._init_tray_icon()
 
     def _init_tray_icon(self):
-        self._tray_icon = QSystemTrayIcon(QIcon("assets/app-icon.svg"), parent=None)
+        if not isinstance(QApplication.instance(), QApplication) or not QSystemTrayIcon.isSystemTrayAvailable():
+            return
+        self._tray_icon = QSystemTrayIcon(QApplication.windowIcon(), self)
         self._tray_icon.setToolTip("Project Tracker")
         self._tray_icon.show()
 

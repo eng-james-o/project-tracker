@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import QtQuick.DragAndDrop 1.0
 import "../"
 
 Rectangle {
@@ -17,7 +16,7 @@ Rectangle {
     color: dragActive ? Style.secondary : Style.background
     border.color: Style.border
     border.width: 1
-    property bool dragActive: false
+    readonly property bool dragActive: dropZone.containsDrag
 
     RowLayout {
         anchors.fill: parent
@@ -78,39 +77,28 @@ Rectangle {
         }
     }
 
-    Drag.handler: DragHandler {
-        id: dragHandler
+    DragHandler {
+        id: handler
+        target: null
         onActiveChanged: {
-            if (active) {
-                dragItem.source = root
-                dragItem.data = root.step
-            }
+            if (active) marker.Drag.start()
+            else marker.Drag.drop()
         }
     }
-
-    Drag.source: DragObject {
-        id: dragItem
-        dragType: "StepItem"
+    Item {
+        id: marker
+        x: handler.centroid.position.x
+        y: handler.centroid.position.y
+        Drag.source: root
+        Drag.keys: ["StepItem"]
     }
-
     DropArea {
+        id: dropZone
         anchors.fill: parent
-        onEntered: function(drag) {
-            if (drag.hasFormat("StepItem")) {
-                root.dragActive = true
-            }
-        }
-        onExited: function(drag) {
-            root.dragActive = false
-        }
-        onDropped: function(drag) {
-            if (drag.hasFormat("StepItem")) {
-                var draggedStep = drag.getDataAsVariant("StepItem")
-                if (draggedStep && draggedStep.id !== root.step.id) {
-                    root.reorderRequested(draggedStep.id, root.step.id)
-                }
-                root.dragActive = false
-            }
+        keys: ["StepItem"]
+        onDropped: function(event) {
+            if (event.source !== root)
+                root.reorderRequested(event.source.step.id, root.step.id)
         }
     }
 }

@@ -24,6 +24,7 @@ ApplicationWindow {
     // Onboarding / profile editor, shown as a modal on first launch
     OnboardingView {
         id: onboardingView
+        objectName: "onboardingView"
     }
 
     Component.onCompleted: {
@@ -36,7 +37,6 @@ ApplicationWindow {
     ProjectDialog {
         id: projectDialog
         anchors.centerIn: parent
-        tagController: tagController
         onAccepted: {
             if (isEdit) {
                 projectController.update_project(
@@ -243,7 +243,7 @@ ApplicationWindow {
                             Image {
                                 anchors.right: parent.right
                                 anchors.rightMargin: 8
-                                source: "../../assets/arrow-left.svg"
+                                source: "../assets/arrow-left.svg"
                                 rotation: sidebarSettings.projectsExpanded ? 90 : 0
                                 visible: !mainWindow.isSidebarCollapsed
                             }
@@ -335,7 +335,7 @@ ApplicationWindow {
                             Image {
                                 anchors.right: parent.right
                                 anchors.rightMargin: 8
-                                source: "../../assets/arrow-left.svg"
+                                source: "../assets/arrow-left.svg"
                                 rotation: sidebarSettings.planningExpanded ? 90 : 0
                                 visible: !mainWindow.isSidebarCollapsed
                             }
@@ -394,7 +394,7 @@ ApplicationWindow {
                             Image {
                                 anchors.right: parent.right
                                 anchors.rightMargin: 8
-                                source: "../../assets/arrow-left.svg"
+                                source: "../assets/arrow-left.svg"
                                 rotation: sidebarSettings.managementExpanded ? 90 : 0
                                 visible: !mainWindow.isSidebarCollapsed
                             }
@@ -453,7 +453,7 @@ ApplicationWindow {
                             Image {
                                 anchors.right: parent.right
                                 anchors.rightMargin: 8
-                                source: "../../assets/arrow-left.svg"
+                                source: "../assets/arrow-left.svg"
                                 rotation: sidebarSettings.toolsExpanded ? 90 : 0
                                 visible: !mainWindow.isSidebarCollapsed
                             }
@@ -557,6 +557,7 @@ ApplicationWindow {
         // Main StackView / Content Area
         StackLayout {
             id: mainStack
+            objectName: "mainStack"
             Layout.fillWidth: true
             Layout.fillHeight: true
             currentIndex: 0

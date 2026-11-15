@@ -12,8 +12,7 @@ QtObject {
     property bool managementExpanded: false
     property bool toolsExpanded: false
     
-    Settings {
-        id: settings
+    readonly property Settings settings: Settings {
         category: "sidebar"
     }
     

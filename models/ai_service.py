@@ -17,7 +17,7 @@ import os
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-from PySide6.QtCore import QObject, Signal, Slot, QThread
+from PySide6.QtCore import QObject, Property, Signal, Slot, QThread
 
 
 class BaseAIProvider(ABC):

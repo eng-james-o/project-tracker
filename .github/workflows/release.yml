@@ -3,8 +3,10 @@ name: Build and Release Executable
 on:
   push:
     tags:
-      - 'v*'
-  workflow_dispatch:
+      - '**'
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -28,8 +30,18 @@ jobs:
         run: |
           python installer/build.py
           
+      - name: Verify the bundled app opens
+        shell: pwsh
+        run: |
+          $app = Start-Process installer/dist/ProjectTracker.exe -ArgumentList '--smoke-test' -PassThru
+          if (-not $app.WaitForExit(120000)) {
+            taskkill /PID $app.Id /T /F
+            throw "Application startup timed out"
+          }
+          if ($app.ExitCode -ne 0) { throw "Application exited with code $($app.ExitCode)" }
+
       - name: Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
+          fail_on_unmatched_files: true
           files: installer/dist/ProjectTracker.exe

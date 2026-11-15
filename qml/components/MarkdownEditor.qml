@@ -5,6 +5,7 @@ import "../"
 
 ColumnLayout {
     id: root
+    property alias placeholderText: editor.placeholderText
     property string text: ""
     property bool showPreview: true
     

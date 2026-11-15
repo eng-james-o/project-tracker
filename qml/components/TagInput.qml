@@ -53,7 +53,7 @@ Rectangle {
                         Layout.preferredWidth: implicitWidth
                         Layout.preferredHeight: implicitHeight
                         text: modelData
-                        color: Style.primary
+                        badgeColor: Style.primary
                         clickable: true
                         
                         onClicked: {

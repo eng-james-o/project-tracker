@@ -1,6 +1,8 @@
 import sys
 import os
-from PySide6.QtGui import QGuiApplication, QIcon
+from PySide6.QtCore import QTimer
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuickControls2 import QQuickStyle
 from models.controller_manager import ControllerManager
@@ -9,7 +11,7 @@ def main():
     # Use Basic style to allow custom QML background/contentItem overrides on controls
     QQuickStyle.setStyle("Basic")
 
-    app = QGuiApplication(sys.argv)
+    app = QApplication(sys.argv)
     app.setOrganizationName("ProjectTracker")
     app.setApplicationName("ProjectTrackerDesktop")
 
@@ -28,6 +30,14 @@ def main():
     if os.path.exists(icon_path):
         app.setWindowIcon(QIcon(icon_path))
 
+    engine, controllers = load_window(app_dir, base_dir)
+
+    if "--smoke-test" in sys.argv:
+        QTimer.singleShot(0, app.quit)
+    sys.exit(app.exec())
+
+
+def load_window(app_dir, base_dir):
     engine = QQmlApplicationEngine()
 
     # Create controllers and expose their domain APIs to the QML context
@@ -71,7 +81,7 @@ def main():
     if not engine.rootObjects():
         sys.exit(-1)
 
-    sys.exit(app.exec())
+    return engine, controllers
 
 if __name__ == "__main__":
     main()

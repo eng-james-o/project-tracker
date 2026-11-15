@@ -24,7 +24,11 @@ A clean, modern, offline-first Project Tracker desktop application built with **
 |----------|------------|
 | ![Settings](docs/screenshots/settings_view.png) | ![Onboarding](docs/screenshots/onboarding_view.png) |
 
-> **Note**: All screenshots are captured at the application's default window size of **1100x750 pixels**.
+Run `python scripts/capture_screenshots.py` to refresh these eight images from the running app at its default 1100 × 750 window size. The script uses temporary databases and a sample project.
+
+### Windows releases
+
+Push a new Git tag on a commit containing the release workflow. GitHub Actions runs PyInstaller on Windows, checks that the packaged application starts, and attaches `ProjectTracker.exe` to the GitHub Release for that tag.
 
 ---
 

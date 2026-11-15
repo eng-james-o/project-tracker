@@ -17,7 +17,7 @@ RowLayout {
             Layout.preferredWidth: implicitWidth
             Layout.preferredHeight: implicitHeight
             text: modelData
-            color: tagController ? tagController.get_tag_color(modelData) : Style.primary
+            badgeColor: tagController ? tagController.get_tag_color(modelData) : Style.primary
             clickable: true
             
             onClicked: {
