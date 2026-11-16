@@ -6,6 +6,36 @@ A clean, modern, offline-first Project Tracker desktop application built with **
 
 ---
 
+## Screenshots
+
+| Dashboard | Projects |
+|-----------|----------|
+| ![Dashboard](docs/screenshots/dashboard_view.png) | ![Projects](docs/screenshots/projects_view.png) |
+
+| Project Detail | Project Board |
+|----------------|---------------|
+| ![Project Detail](docs/screenshots/project_detail_view.png) | ![Project Board](docs/screenshots/project_board_view.png) |
+
+| Goals | Audit Log |
+|-------|-----------|
+| ![Goals](docs/screenshots/goals_view.png) | ![Audit Log](docs/screenshots/audit_log_view.png) |
+
+| Settings | Onboarding |
+|----------|------------|
+| ![Settings](docs/screenshots/settings_view.png) | ![Onboarding](docs/screenshots/onboarding_view.png) |
+
+**AI Assistant**
+
+![AI Assistant open in the right-hand drawer](docs/screenshots/ai_assistant_view.png)
+
+Run `python scripts/capture_screenshots.py` to refresh the screenshots from the running app at its default 1100 × 750 window size. The script uses temporary databases and a sample project.
+
+### Windows releases
+
+Push a new Git tag on a commit containing the release workflow. GitHub Actions runs PyInstaller on Windows, checks that the packaged application starts, and attaches `ProjectTracker.exe` to the GitHub Release for that tag.
+
+---
+
 ## Features
 
 - **Dashboard Overview**: See high-level project metrics, active projects, and upcoming close deadlines in one place.
@@ -23,33 +53,51 @@ A clean, modern, offline-first Project Tracker desktop application built with **
 
 ```text
 .
-├── main.py                    # Application entry point
-├── requirements.txt           # Python dependencies
-├── README.md                  # Project documentation
-├── CHANGELOG.md               # Version history and changes
-├── CONTRIBUTING.md            # Guidelines for contributing & conventional commits
-├── db/
-│   └── database.py            # SQLite database schema and CRUD operations
-├── models/
-│   └── project_controller.py  # PySide6 controller (Signals, Slots & Properties for QML)
-├── qml/
-│   ├── main.qml               # Main window layout and sidebar navigation
-│   ├── components/            # Reusable QML components
-│   │   ├── CustomButton.qml
-│   │   ├── CustomTextField.qml
-│   │   ├── DeliverableItem.qml
-│   │   ├── ProjectCard.qml
-│   │   ├── ProjectDialog.qml
-│   │   ├── ResourceItem.qml
-│   │   ├── StatCard.qml
-│   │   ├── StatusBadge.qml
-│   │   └── StepItem.qml
-│   └── views/                 # View screens
-│       ├── DashboardView.qml
-│       ├── ProjectsView.qml
-│       └── ProjectDetailView.qml
-└── tests/
-    └── test_project_tracker.py # Unit tests for DB and Controller
+ main.py                    # Application entry point
+ requirements.txt           # Python dependencies
+ README.md                  # Project documentation
+ CHANGELOG.md               # Version history and changes
+ CONTRIBUTING.md            # Guidelines for contributing & conventional commits
+ qtquickcontrols2.conf      # Qt Quick Controls 2 configuration
+ db/
+    database.py            # SQLite database schema and CRUD operations
+ models/
+    project_controller.py  # PySide6 controller (Signals, Slots & Properties for QML)
+ qml/
+    main.qml               # Main window layout and sidebar navigation
+    Style.qml              # Global style singleton
+    style/                 # Custom Qt Quick Controls 2 templates
+       Button.qml
+       CheckBox.qml
+       ComboBox.qml
+       Slider.qml
+       TextField.qml
+       qmldir
+    components/            # Reusable QML components
+       CustomButton.qml
+       CustomTextField.qml
+       DeliverableItem.qml
+       ProjectCard.qml
+       ProjectDialog.qml
+       ResourceItem.qml
+       StatCard.qml
+       StatusBadge.qml
+       StepItem.qml
+       common/              # Common reusable components
+           Card.qml
+           EmptyState.qml
+           LoadingIndicator.qml
+           Tooltip.qml
+    views/                 # View screens
+        DashboardView.qml
+        ProjectsView.qml
+        ProjectBoardView.qml
+        GoalsView.qml
+        AuditLogView.qml
+        SettingsView.qml
+        OnboardingView.qml
+ tests/
+     test_project_tracker.py # Unit tests for DB and Controller
 ```
 
 ---
@@ -58,7 +106,7 @@ A clean, modern, offline-first Project Tracker desktop application built with **
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/project-tracker.git
+   git clone https://github.com/eng-james-o/project-tracker.git
    cd project-tracker
    ```
 
@@ -84,6 +132,12 @@ python main.py
 ```
 
 ---
+
+### AI Assistant credentials
+
+Open **Settings → AI Assistant** to select a provider and save its API key. Gemini is selected on first launch. On Windows, the app saves the key under the signed-in user's Windows Credential Manager. Leaving the field blank preserves the saved key. Open the conversation from **Tools → AI Assistant** or the button on the right edge.
+
+Source runs also accept `GEMINI_API_KEY` or `GROQ_API_KEY` from the environment or a local `.env` next to `main.py`. A saved key takes priority. The Windows executable uses the key supplied through Settings. The release workflow requires no provider secrets.
 
 ## Running Tests
 

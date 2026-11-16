@@ -1,0 +1,7 @@
+module ProjectTracker.Style
+
+Button 1.0 Button.qml
+TextField 1.0 TextField.qml
+ComboBox 1.0 ComboBox.qml
+CheckBox 1.0 CheckBox.qml
+Slider 1.0 Slider.qml

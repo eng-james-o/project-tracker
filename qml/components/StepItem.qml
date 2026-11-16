@@ -9,18 +9,28 @@ Rectangle {
     signal toggled(bool completed)
     signal editClicked()
     signal deleted()
+    signal reorderRequested(int draggedStepId, int targetStepId)
 
     implicitHeight: 44
     radius: Style.radiusMedium
-    color: Style.background
+    color: dragActive ? Style.secondary : Style.background
     border.color: Style.border
     border.width: 1
+    readonly property bool dragActive: dropZone.containsDrag
 
     RowLayout {
         anchors.fill: parent
         anchors.leftMargin: 12
         anchors.rightMargin: 12
         spacing: 10
+
+        Keys.onPressed: function(event) {
+            if (event.key === Qt.Key_Space) {
+                chk.checked = !chk.checked
+                root.toggled(chk.checked)
+                event.accepted = true
+            }
+        }
 
         CustomCheckBox {
             id: chk
@@ -64,6 +74,31 @@ Rectangle {
             variant: "icon"
             iconSource: "../../assets/trash.svg"
             onClicked: root.deleted()
+        }
+    }
+
+    DragHandler {
+        id: handler
+        target: null
+        onActiveChanged: {
+            if (active) marker.Drag.start()
+            else marker.Drag.drop()
+        }
+    }
+    Item {
+        id: marker
+        x: handler.centroid.position.x
+        y: handler.centroid.position.y
+        Drag.source: root
+        Drag.keys: ["StepItem"]
+    }
+    DropArea {
+        id: dropZone
+        anchors.fill: parent
+        keys: ["StepItem"]
+        onDropped: function(event) {
+            if (event.source !== root)
+                root.reorderRequested(event.source.step.id, root.step.id)
         }
     }
 }

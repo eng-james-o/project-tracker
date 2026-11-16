@@ -6,7 +6,7 @@ import "../"
 Dialog {
     id: root
 
-    default property alias contentData: contentColumn.data
+    default property alias bodyData: contentColumn.data
 
     property string saveButtonText: "Save"
     property string cancelButtonText: "Cancel"

@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import QtQuick.Controls
 
 QtObject {
     property bool isDarkMode: false
@@ -53,4 +54,26 @@ QtObject {
     property int radiusMedium: 6
     property int radiusLarge: 8
     property int radiusXLarge: 10
+
+    property int spacingSmall: 4
+    property int spacingMedium: 8
+    property int spacingLarge: 12
+    property int spacingXLarge: 16
+
+    property int paddingSmall: 8
+    property int paddingMedium: 12
+    property int paddingLarge: 16
+
+    property int fontSizeSmall: 12
+    property int fontSizeMedium: 13
+    property int fontSizeLarge: 14
+    property int fontSizeXLarge: 16
+    property int fontSizeTitle: 18
+    property int fontSizeHeading: 20
+
+    property string fontFamily: "Segoe UI"
+
+    property int shadowElevationSmall: 1
+    property int shadowElevationMedium: 2
+    property int shadowElevationLarge: 4
 }

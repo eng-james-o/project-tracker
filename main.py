@@ -1,6 +1,8 @@
 import sys
 import os
-from PySide6.QtGui import QGuiApplication, QIcon
+from PySide6.QtCore import QEvent, QTimer
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuickControls2 import QQuickStyle
 from models.controller_manager import ControllerManager
@@ -9,7 +11,7 @@ def main():
     # Use Basic style to allow custom QML background/contentItem overrides on controls
     QQuickStyle.setStyle("Basic")
 
-    app = QGuiApplication(sys.argv)
+    app = QApplication(sys.argv)
     app.setOrganizationName("ProjectTracker")
     app.setApplicationName("ProjectTrackerDesktop")
 
@@ -28,6 +30,20 @@ def main():
     if os.path.exists(icon_path):
         app.setWindowIcon(QIcon(icon_path))
 
+    engine, controllers = load_window(app_dir, base_dir)
+
+    if "--smoke-test" in sys.argv:
+        QTimer.singleShot(0, app.quit)
+    status = app.exec()
+    engine.deleteLater()
+    app.sendPostedEvents(engine, QEvent.DeferredDelete)
+    sys.exit(status)
+
+
+def load_window(app_dir, base_dir):
+    from dotenv import load_dotenv
+    if not getattr(sys, "frozen", False):
+        load_dotenv(os.path.join(base_dir, ".env"), override=False, interpolate=False)
     engine = QQmlApplicationEngine()
 
     # Create controllers and expose their domain APIs to the QML context
@@ -52,6 +68,18 @@ def main():
     engine.rootContext().setContextProperty(
         "profileController", controllers.profile_controller
     )
+    engine.rootContext().setContextProperty(
+        "tagController", controllers.tag_controller
+    )
+    engine.rootContext().setContextProperty(
+        "templateController", controllers.template_controller
+    )
+    engine.rootContext().setContextProperty(
+        "notificationController", controllers.notification_controller
+    )
+    engine.rootContext().setContextProperty(
+        "aiController", controllers.ai_controller
+    )
 
     main_qml = os.path.join(app_dir, "qml", "main.qml")
     engine.load(main_qml)
@@ -59,7 +87,7 @@ def main():
     if not engine.rootObjects():
         sys.exit(-1)
 
-    sys.exit(app.exec())
+    return engine, controllers
 
 if __name__ == "__main__":
     main()

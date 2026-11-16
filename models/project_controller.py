@@ -9,6 +9,7 @@ class ProjectController(QObject):
     projectsChanged = Signal()
     selectedProjectChanged = Signal()
     allTagsChanged = Signal()
+    tagFilterChanged = Signal()
 
     def __init__(
         self,
@@ -25,13 +26,27 @@ class ProjectController(QObject):
         self._all_tags: List[str] = []
         self._status_filter = "all"
         self._search_text = ""
+        self._tag_filter: List[str] = []
 
     @Slot()
     def refresh_projects(self):
-        self._projects = self.db.get_projects(
-            status_filter=self._status_filter,
-            search=self._search_text,
-        )
+        if self._tag_filter:
+            # Filter by tags
+            projects_by_tags = self.db.get_projects_by_tags(self._tag_filter)
+            all_projects = self.db.get_projects(
+                status_filter=self._status_filter,
+                search=self._search_text,
+            )
+            # Intersect the two lists
+            self._projects = [
+                p for p in all_projects
+                if any(p['id'] == tp['id'] for tp in projects_by_tags)
+            ]
+        else:
+            self._projects = self.db.get_projects(
+                status_filter=self._status_filter,
+                search=self._search_text,
+            )
         self.projectsChanged.emit()
 
     @Slot()
@@ -67,6 +82,10 @@ class ProjectController(QObject):
     def allTags(self):
         return self._all_tags
 
+    @Property(list, notify=tagFilterChanged)
+    def tagFilter(self) -> List[str]:
+        return self._tag_filter
+
     @Slot(int)
     def load_project_details(self, project_id: int):
         project = self.db.get_project_by_id(project_id)
@@ -87,6 +106,33 @@ class ProjectController(QObject):
         if self._search_text != search:
             self._search_text = search
             self.refresh_projects()
+
+    @Slot(list)
+    def setTagFilter(self, tags: List[str]):
+        if self._tag_filter != tags:
+            self._tag_filter = tags
+            self.tagFilterChanged.emit()
+            self.refresh_projects()
+
+    @Slot(str)
+    def addTagFilter(self, tag: str):
+        if tag not in self._tag_filter:
+            self._tag_filter.append(tag)
+            self.tagFilterChanged.emit()
+            self.refresh_projects()
+
+    @Slot(str)
+    def removeTagFilter(self, tag: str):
+        if tag in self._tag_filter:
+            self._tag_filter.remove(tag)
+            self.tagFilterChanged.emit()
+            self.refresh_projects()
+
+    @Slot()
+    def clearTagFilter(self):
+        self._tag_filter = []
+        self.tagFilterChanged.emit()
+        self.refresh_projects()
 
     @Slot(str, str, str, str, str, str, float, float, str, str, int, bool, result=int)
     @Slot(str, str, str, str, str, str, result=int)

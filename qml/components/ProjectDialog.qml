@@ -207,13 +207,23 @@ CustomModal {
             Layout.fillWidth: true
             spacing: 12
 
-            CustomTextField {
-                // TODO: tags should be stored in the database and should be reusable when the user is filling this field
-                // Tags serve as a means to filter or search for a project or idea, or goal
-                id: tagsInput
-                label: "Tags (comma separated)"
-                placeholderText: "e.g., web, mobile, client-work"
+            ColumnLayout {
+                spacing: 4
                 Layout.fillWidth: true
+
+                Text {
+                    text: "Tags (comma separated)"
+                    font.pixelSize: 12
+                    font.weight: Font.Medium
+                    color: "#5F6368"
+                }
+
+                TagInput {
+                    id: tagsInput
+                    Layout.fillWidth: true
+                    placeholderText: "e.g., web, mobile, client-work"
+                    tagController: tagController
+                }
             }
 
             ColumnLayout {
@@ -245,27 +255,16 @@ CustomModal {
             Layout.fillWidth: true
 
             Text {
-                text: "Description / Notes"
+                text: "Description / Notes (Markdown)"
                 font.pixelSize: 12
                 font.weight: Font.Medium
                 color: Style.textSecondary
             }
 
-            TextArea {
+            MarkdownEditor {
                 id: descInput
                 Layout.fillWidth: true
-                implicitHeight: 80
                 placeholderText: "Add key requirements, scope details, or client preferences..."
-                wrapMode: TextArea.Wrap
-                color: Style.textMain
-                selectionColor: Style.primaryHover
-                selectedTextColor: Style.surface
-                placeholderTextColor: Style.textSecondary
-                background: Rectangle {
-                    radius: Style.radiusMedium
-                    color: Style.background
-                    border.color: descInput.activeFocus ? Style.primary : Style.border
-                }
             }
         }
     }
