@@ -170,3 +170,54 @@ def test_planning_controller_normalizes_display_statuses(test_dbs):
     assert goal["goal_type"] == "weekly"
     assert goal["status"] == "in_progress"
     assert goal["priority"] == "high"
+
+
+def test_existing_step_and_deliverable_positions(test_dbs):
+    db_path, audit_path = test_dbs
+    audit = AuditDatabaseManager(db_path=audit_path)
+    db = DatabaseManager(db_path, audit)
+    pid = db.add_project("Legacy project")
+    sid = db.add_step(pid, "Survey")
+    did = db.add_deliverable(pid, "Report")
+    with db.get_connection() as conn:
+        for table in ("steps", "deliverables"):
+            conn.execute(f"ALTER TABLE {table} DROP COLUMN position")
+    for _ in range(2):
+        db = DatabaseManager(db_path, audit)
+        assert db.get_steps(pid)[0]["id"] == sid
+        assert db.get_deliverables(pid)[0]["id"] == did
+        from models.notification_controller import NotificationController
+        NotificationController(db).check_upcoming_deadlines()
+
+
+def test_packaged_assistant_requires_saved_credential(monkeypatch, tmp_path):
+    import sys
+    from unittest.mock import Mock
+    from PySide6.QtCore import QSettings
+    from models import ai_controller
+
+    vault = Mock()
+    secrets = {}
+    vault.get_password.side_effect = lambda service, provider: secrets.get(provider)
+    vault.set_password.side_effect = lambda service, provider, key: secrets.update({provider: key})
+    if sys.platform == "win32":
+        from keyring.backends import Windows
+        monkeypatch.setattr(Windows, "WinVaultKeyring", lambda: vault)
+    else:
+        monkeypatch.setattr(ai_controller.keyring, "get_keyring", lambda: vault)
+    prefs = QSettings(str(tmp_path / "prefs.ini"), QSettings.IniFormat)
+    monkeypatch.setattr(ai_controller, "QSettings", lambda: prefs)
+    monkeypatch.setenv("GEMINI_API_KEY", "source-only-test-value")
+    monkeypatch.setattr(sys, "frozen", False, raising=False)
+    controller = ai_controller.AIController()
+    assert controller.currentProvider == "gemini"
+    assert controller._ai_service._providers["gemini"].api_key == "source-only-test-value"
+
+    monkeypatch.setattr(sys, "frozen", True)
+    controller = ai_controller.AIController()
+    assert not controller._ai_service._providers["gemini"].is_available()
+    assert controller.setProvider("gemini", "credential-store-test-value") == ""
+    assert controller.setProvider("gemini", "") == ""
+    restored = ai_controller.AIController()
+    assert restored._ai_service._providers["gemini"].api_key == "credential-store-test-value"
+    assert prefs.allKeys() == ["ai/provider"]

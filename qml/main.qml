@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt.labs.settings 1.0
 import "components"
 import "views"
 import "."
@@ -142,8 +141,7 @@ ApplicationWindow {
     // AI Assistant Drawer
     AIAssistantDrawer {
         id: aiAssistantDrawer
-        aiController: aiController
-        projectController: projectController
+        objectName: "assistantDrawer"
     }
 
     RowLayout {
@@ -594,6 +592,18 @@ ApplicationWindow {
             SettingsView {
                 onEditProfileRequested: onboardingView.openForEdit()
             }
+        }
+
+        ToolButton {
+            objectName: "openAssistant"
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            z: 9
+            icon.source: "../assets/sidebar.svg"
+            Accessible.name: "Open AI Assistant"
+            ToolTip.visible: hovered
+            ToolTip.text: Accessible.name
+            onClicked: aiAssistantDrawer.open()
         }
 
         RoundButton {

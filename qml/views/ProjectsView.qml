@@ -113,7 +113,6 @@ ScrollView {
 
                 TagFilter {
                     Layout.fillWidth: true
-                    tagController: projectController
                 }
             }
         }

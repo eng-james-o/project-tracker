@@ -1,6 +1,6 @@
 import sys
 import os
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QEvent, QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlApplicationEngine
@@ -34,10 +34,16 @@ def main():
 
     if "--smoke-test" in sys.argv:
         QTimer.singleShot(0, app.quit)
-    sys.exit(app.exec())
+    status = app.exec()
+    engine.deleteLater()
+    app.sendPostedEvents(engine, QEvent.DeferredDelete)
+    sys.exit(status)
 
 
 def load_window(app_dir, base_dir):
+    from dotenv import load_dotenv
+    if not getattr(sys, "frozen", False):
+        load_dotenv(os.path.join(base_dir, ".env"), override=False, interpolate=False)
     engine = QQmlApplicationEngine()
 
     # Create controllers and expose their domain APIs to the QML context

@@ -24,7 +24,7 @@ A clean, modern, offline-first Project Tracker desktop application built with **
 |----------|------------|
 | ![Settings](docs/screenshots/settings_view.png) | ![Onboarding](docs/screenshots/onboarding_view.png) |
 
-Run `python scripts/capture_screenshots.py` to refresh these eight images from the running app at its default 1100 × 750 window size. The script uses temporary databases and a sample project.
+Run `python scripts/capture_screenshots.py` to refresh the screenshots from the running app at its default 1100 × 750 window size. The script uses temporary databases and a sample project.
 
 ### Windows releases
 
@@ -148,3 +148,9 @@ We welcome contributions! Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for
 ## License
 
 This project is licensed under the MIT License.
+
+### AI Assistant credentials
+
+Open **Settings → AI Assistant** to select a provider and save its API key. Gemini is selected on first launch. On Windows, the app saves the key under the signed-in user's Windows Credential Manager. Leaving the field blank preserves the saved key. Open the conversation from **Tools → AI Assistant** or the button on the right edge.
+
+Source runs also accept `GEMINI_API_KEY` or `GROQ_API_KEY` from the environment or a local `.env` next to `main.py`. A saved key takes priority. The Windows executable uses the key supplied through Settings. The release workflow requires no provider secrets.

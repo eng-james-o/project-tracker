@@ -87,6 +87,35 @@ ScrollView {
             }
         }
 
+        ColumnLayout {
+            Layout.fillWidth: true
+            Label { text: "AI Assistant"; color: Style.textMain; font.bold: true; font.pixelSize: 16 }
+            Label { text: "Provider"; color: Style.textSecondary }
+            CustomComboBox {
+                id: aiProvider
+                model: aiController.availableProviders
+                currentIndex: model.indexOf(aiController.currentProvider)
+                onActivated: { aiKey.clear(); aiFeedback.text = "" }
+            }
+            CustomTextField {
+                id: aiKey
+                Layout.fillWidth: true
+                visible: aiProvider.currentText !== "ollama"
+                label: "API key"
+                echoMode: TextInput.Password
+                placeholderText: "Leave blank to keep the configured key"
+            }
+            CustomButton {
+                text: "Save AI settings"
+                onClicked: {
+                    const error = aiController.setProvider(aiProvider.currentText, aiKey.text)
+                    aiFeedback.text = error || "AI settings saved."
+                    if (!error) aiKey.clear()
+                }
+            }
+            Label { id: aiFeedback; visible: text.length > 0; color: Style.textSecondary }
+        }
+
         // Settings Section Card
         Rectangle {
             Layout.fillWidth: true

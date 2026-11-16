@@ -6,11 +6,10 @@ import "."
 
 RowLayout {
     id: root
-    property var tagController: null
     spacing: 8
     
     Repeater {
-        model: tagController ? tagController.allTags : []
+        model: projectController.allTags
         
         TagBadge {
             id: tagBadge
@@ -21,18 +20,18 @@ RowLayout {
             clickable: true
             
             onClicked: {
-                if (tagController.is_tag_selected(modelData)) {
-                    tagController.remove_tag_filter(modelData)
+                if (projectController.tagFilter.indexOf(modelData) >= 0) {
+                    projectController.removeTagFilter(modelData)
                 } else {
-                    tagController.add_tag_filter(modelData)
+                    projectController.addTagFilter(modelData)
                 }
             }
             
             Rectangle {
                 anchors.fill: parent
-                color: tagController && tagController.is_tag_selected(modelData) ? Qt.alpha(Style.primary, 0.2) : "transparent"
+                color: projectController.tagFilter.indexOf(modelData) >= 0 ? Qt.alpha(Style.primary, 0.2) : "transparent"
                 radius: parent.radius
-                visible: tagController && tagController.is_tag_selected(modelData)
+                visible: projectController.tagFilter.indexOf(modelData) >= 0
             }
         }
     }
@@ -45,6 +44,6 @@ RowLayout {
         variant: "icon"
         iconSource: "../../assets/plus.svg"
         ToolTip.text: "Clear Tag Filter"
-        onClicked: tagController ? tagController.clear_tag_filter() : null
+        onClicked: projectController.clearTagFilter()
     }
 }

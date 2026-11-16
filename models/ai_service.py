@@ -13,7 +13,6 @@ Usage:
 """
 
 import json
-import os
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
@@ -38,7 +37,7 @@ class GroqProvider(BaseAIProvider):
     """Groq API provider."""
     
     def __init__(self, api_key: str = ""):
-        self.api_key = api_key or os.getenv("GROQ_API_KEY", "")
+        self.api_key = api_key
         self.base_url = "https://api.groq.com/openai/v1/chat/completions"
         self.model = "llama-3.3-70b-versatile"
     
@@ -78,8 +77,8 @@ class GeminiProvider(BaseAIProvider):
     """Google Gemini API provider."""
     
     def __init__(self, api_key: str = ""):
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY", "")
-        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+        self.api_key = api_key
+        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent"
     
     def is_available(self) -> bool:
         return bool(self.api_key)
@@ -93,9 +92,7 @@ class GeminiProvider(BaseAIProvider):
         headers = {
             "Content-Type": "application/json"
         }
-        params = {
-            "key": self.api_key
-        }
+        headers["x-goog-api-key"] = self.api_key
         
         payload = {
             "contents": [
@@ -111,7 +108,7 @@ class GeminiProvider(BaseAIProvider):
         }
         
         try:
-            response = httpx.post(self.base_url, headers=headers, params=params, json=payload, timeout=30)
+            response = httpx.post(self.base_url, headers=headers, json=payload, timeout=30)
             response.raise_for_status()
             result = response.json()
             return result['candidates'][0]['content']['parts'][0]['text']
@@ -164,7 +161,7 @@ class OllamaProvider(BaseAIProvider):
 class AIWorker(QThread):
     """Worker thread for non-blocking AI calls."""
     
-    finished = Signal(str)
+    resultReady = Signal(str)
     error = Signal(str)
     
     def __init__(self, provider: BaseAIProvider, prompt: str, system_prompt: str = "", temperature: float = 0.3):
@@ -177,7 +174,7 @@ class AIWorker(QThread):
     def run(self):
         try:
             result = self.provider.generate(self.prompt, self.system_prompt, self.temperature)
-            self.finished.emit(result)
+            self.resultReady.emit(result)
         except Exception as e:
             self.error.emit(str(e))
 
@@ -197,7 +194,8 @@ class AIService(QObject):
             "gemini": GeminiProvider(),
             "ollama": OllamaProvider()
         }
-        self._current_provider_name = "groq"
+        self._current_provider_name = "gemini"
+        self._workers = set()
     
     @Property(str)
     def current_provider(self) -> str:
@@ -220,6 +218,16 @@ class AIService(QObject):
         else:
             raise ValueError(f"Unknown provider: {provider_name}")
     
+    @Slot()
+    def _worker_finished(self):
+        worker = self.sender()
+        self._workers.discard(worker)
+        worker.deleteLater()
+
+    def shutdown(self):
+        for worker in tuple(self._workers):
+            worker.wait()
+
     @Slot(str, str, result=str)
     def generate(self, prompt: str, system_prompt: str = "") -> str:
         """Generate a response (blocking call)."""
@@ -240,13 +248,15 @@ class AIService(QObject):
             self.generationFailed.emit(f"Provider {self._current_provider_name} not found")
             return
         
-        if not provider.is_available():
-            self.generationFailed.emit(f"Provider {self._current_provider_name} is not available")
+        if isinstance(provider, (GeminiProvider, GroqProvider)) and not provider.is_available():
+            self.generationFailed.emit("Add an API key under Settings → AI Assistant.")
             return
         
         self.generationStarted.emit()
         worker = AIWorker(provider, prompt, system_prompt)
-        worker.finished.connect(self.generationFinished)
+        self._workers.add(worker)
+        worker.finished.connect(self._worker_finished)
+        worker.resultReady.connect(self.generationFinished)
         worker.error.connect(self.generationFailed)
         worker.start()
     

@@ -1,11 +1,11 @@
-"""Capture the desktop app's eight views into docs/screenshots."""
+"""Capture the desktop app's views into docs/screenshots."""
 
 import os
 import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from PySide6.QtCore import QMetaObject, QObject, QPointF, QSettings, Qt
+from PySide6.QtCore import QEvent, QMetaObject, QObject, QPointF, QSettings, Qt
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQuick import QQuickItem, QQuickWindow
 from PySide6.QtQuickControls2 import QQuickStyle
@@ -54,7 +54,7 @@ def main():
         onboarding = window.findChild(QObject, "onboardingView")
         project = controllers.project_controller
         pid = project.add_project("Field survey", "Survey team", "", "active",
-                                  "2027-01-15", "Prepare the site survey and mapping report.")
+                                  "2027-01-15", "Prepare the site survey and mapping report.", tags="survey")
         project.load_project_details(pid)
         if not QTest.qWaitForWindowExposed(window):
             raise RuntimeError("The application window did not open")
@@ -80,8 +80,21 @@ def main():
             if stack.property("currentIndex") != index:
                 raise RuntimeError(f"Sidebar navigation failed: {name}")
             capture(window, output, name)
+        click_sidebar(window, "Tools")
+        click_sidebar(window, "AI Assistant")
+        drawer = window.findChild(QObject, "assistantDrawer")
+        assert drawer.property("visible")
+        QMetaObject.invokeMethod(drawer, "close")
+        QTest.qWait(400)
+        button = window.findChild(QQuickItem, "openAssistant")
+        center = button.mapToScene(QPointF(button.width() / 2, button.height() / 2))
+        QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, center.toPoint())
+        QTest.qWait(400)
+        assert drawer.property("visible")
+        capture(window, output, "ai_assistant")
         window.close()
-        del engine, controllers
+        engine.deleteLater()
+        app.sendPostedEvents(engine, QEvent.DeferredDelete)
 
 
 if __name__ == "__main__":

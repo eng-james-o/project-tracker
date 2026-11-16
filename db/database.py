@@ -21,6 +21,8 @@ class DatabaseManager:
         with self.get_connection() as conn:
             cursor = conn.cursor()
 
+            cursor.execute("BEGIN IMMEDIATE")
+
             # User Profile Table
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS user_profiles (
@@ -100,6 +102,11 @@ class DatabaseManager:
                 FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
             );
             """)
+
+            for table in ("steps", "deliverables"):
+                columns = {row["name"] for row in cursor.execute(f"PRAGMA table_info({table})")}
+                if "position" not in columns:
+                    cursor.execute(f"ALTER TABLE {table} ADD COLUMN position INTEGER DEFAULT 0")
 
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS resources (
