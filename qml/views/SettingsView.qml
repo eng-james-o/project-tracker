@@ -89,6 +89,87 @@ ScrollView {
 
         ColumnLayout {
             Layout.fillWidth: true
+            Component.onCompleted: accountController.restore()
+
+            Label {
+                text: "Project Tracker account"
+                color: Style.textMain
+                font.bold: true
+                font.pixelSize: 16
+            }
+            Label {
+                text: "Sign in with an account created for Project Tracker. Local projects work without sign-in."
+                color: Style.textSecondary
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+            }
+            ColumnLayout {
+                Layout.fillWidth: true
+                visible: !accountController.hasSession
+                enabled: !accountController.busy
+
+                CustomTextField {
+                    id: accountKey
+                    Layout.fillWidth: true
+                    label: "Supabase publishable key"
+                    placeholderText: "sb_publishable_…"
+                    text: accountController.publishableKey
+                }
+                CustomTextField {
+                    id: accountEmail
+                    Layout.fillWidth: true
+                    label: "Email"
+                    inputMethodHints: Qt.ImhEmailCharactersOnly
+                }
+                CustomTextField {
+                    id: accountPassword
+                    Layout.fillWidth: true
+                    label: "Password"
+                    echoMode: TextInput.Password
+                    inputMethodHints: Qt.ImhSensitiveData
+                }
+                CustomButton {
+                    text: "Sign in"
+                    variant: "primary"
+                    enabled: accountEmail.text.trim() !== "" && accountPassword.text !== ""
+                             && accountKey.text.trim() !== ""
+                    onClicked: {
+                        accountController.signIn(accountEmail.text, accountPassword.text, accountKey.text)
+                        accountPassword.clear()
+                    }
+                }
+            }
+            Label {
+                visible: accountController.email !== ""
+                text: "Signed in as " + accountController.email
+                textFormat: Text.PlainText
+                color: Style.textMain
+            }
+            RowLayout {
+                visible: accountController.hasSession
+                enabled: !accountController.busy
+                CustomButton {
+                    visible: accountController.email === ""
+                    text: "Retry session"
+                    onClicked: accountController.restore()
+                }
+                CustomButton {
+                    text: "Sign out"
+                    onClicked: accountController.signOut()
+                }
+            }
+            Label {
+                visible: text !== ""
+                text: accountController.busy ? "Connecting…" : accountController.message
+                textFormat: Text.PlainText
+                color: Style.textSecondary
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+            }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
             Label { text: "AI Assistant"; color: Style.textMain; font.bold: true; font.pixelSize: 16 }
             Label { text: "Provider"; color: Style.textSecondary }
             CustomComboBox {
