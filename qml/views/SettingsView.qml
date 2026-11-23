@@ -98,7 +98,7 @@ ScrollView {
                 font.pixelSize: 16
             }
             Label {
-                text: "Sign in with an account created for Project Tracker. Local projects work without sign-in."
+                text: "Signing in syncs this workspace’s projects, steps, deliverables, and portable resources. Local projects work offline."
                 color: Style.textSecondary
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
@@ -149,8 +149,7 @@ ScrollView {
                 visible: accountController.hasSession
                 enabled: !accountController.busy
                 CustomButton {
-                    visible: accountController.email === ""
-                    text: "Retry session"
+                    text: accountController.email === "" ? "Retry session" : "Sync now"
                     onClicked: accountController.restore()
                 }
                 CustomButton {

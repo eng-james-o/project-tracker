@@ -5,6 +5,7 @@ from PySide6.QtCore import QObject
 from db.audit_database import AuditDatabaseManager
 from db.database import DatabaseManager
 from models.account_controller import AccountController
+from models.workspace_sync import WorkspaceSync
 from models.ai_controller import AIController
 from models.clipboard_controller import ClipboardController
 from models.dashboard_controller import DashboardController
@@ -44,7 +45,7 @@ class ControllerManager:
         self.template_controller = TemplateController(self.db, parent)
         self.notification_controller = NotificationController(self.db, parent)
         self.ai_controller = AIController(parent)
-        self.account_controller = AccountController(parent)
+        self.account_controller = AccountController(parent, WorkspaceSync(self.db), self.refresh_all)
         self.project_controller.on_selection_changed = (
             self.dashboard_controller.refresh_audit_logs
         )

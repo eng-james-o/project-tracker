@@ -7,6 +7,8 @@ import keyring
 from PySide6.QtCore import Property, QObject, QSettings, QUrl, Signal, Slot
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
 
+from models.workspace_sync import WorkspaceAccountMismatch
+
 PROJECT_URL = "https://mjqyduegwtllzxgnmcit.supabase.co"
 PUBLISHABLE_KEY = re.compile(r"sb_publishable_[A-Za-z0-9_-]+")
 KEY_SETTING = "supabase/publishable_key"
@@ -34,9 +36,11 @@ def platform_keyring():
 class AccountController(QObject):
     changed = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, workspace=None, on_refresh=None):
         super().__init__(parent)
         self._network = QNetworkAccessManager(self)
+        self._workspace = workspace
+        self._on_refresh = on_refresh
         self._settings = QSettings()
         self._key = self._settings.value(KEY_SETTING, "", type=str)
         self._email = ""
@@ -66,7 +70,7 @@ class AccountController(QObject):
 
     @Slot()
     def restore(self):
-        if self._busy or self._email or not self._key:
+        if self._busy or not self._key:
             return
         try:
             refresh_token = platform_keyring().get_password(KEYRING_SERVICE, KEYRING_ENTRY)
@@ -159,6 +163,7 @@ class AccountController(QObject):
             except Exception:
                 self._finish("Unable to clear the expired session from your system credential store.")
                 return
+            self._email = ""
             self._has_session = False
             self._finish("Session expired. Sign in again.")
         else:
@@ -177,7 +182,59 @@ class AccountController(QObject):
         self._key = key
         self._email = session["user"]["email"]
         self._has_session = True
-        self._finish()
+        if self._workspace is None:
+            self._finish()
+        else:
+            self.changed.emit()
+            self._sync_workspace(session)
+
+    def _sync_workspace(self, session):
+        owner = session["user"].get("id")
+        if not owner:
+            self._finish("Signed in. The cloud account could not be identified for sync.")
+            return
+
+        def snapshot(data, status, code):
+            if status != 200 or not isinstance(data, dict):
+                self._finish("Signed in. Cloud refresh failed. Try Sync now.")
+                return
+            try:
+                writes, pulled, conflicts = self._workspace.prepare(owner, data)
+            except WorkspaceAccountMismatch:
+                self._finish("This local workspace is linked to another account. Its records were kept on this device.")
+                return
+            except Exception:
+                self._finish("Signed in. The cloud snapshot could not be applied. Try Sync now.")
+                return
+            if self._on_refresh is not None:
+                self._on_refresh()
+
+            def push(offset):
+                batch = writes[offset: offset + 100]
+                if not batch:
+                    suffix = f" {conflicts} conflict(s) kept on this device." if conflicts else ""
+                    self._finish(f"Sync complete. {pulled} downloaded, {len(writes)} uploaded." + suffix)
+                    return
+
+                def acknowledge(receipts, status, code):
+                    if status != 200 or not isinstance(receipts, list):
+                        message = ("Cloud records changed during sync. Try Sync now."
+                                   if code == "40001" else "Cloud upload failed. Local changes are saved for retry.")
+                        self._finish(message)
+                        return
+                    try:
+                        self._workspace.acknowledge(batch, receipts)
+                    except Exception:
+                        self._finish("Cloud response could not be saved. Try Sync now.")
+                        return
+                    push(offset + len(batch))
+
+                self._request("rpc/tracker_sync_write", {"changes": batch}, self._key,
+                              acknowledge, bearer=session["access_token"], api="rest/v1")
+            push(0)
+
+        self._request("rpc/tracker_sync_snapshot", {}, self._key, snapshot,
+                      bearer=session["access_token"], api="rest/v1")
 
     def _sign_out_finished(self, status, code, refreshed=True):
         confirmed = code in EXPIRED_CODES or (refreshed and 200 <= status < 300)
@@ -185,6 +242,8 @@ class AccountController(QObject):
 
     def _token(self, grant, payload, key, callback):
         def finished(data, status, code):
+            if not isinstance(data, dict):
+                data = {}
             user = data.get("user")
             fields = (user.get("email") if isinstance(user, dict) else None,
                       data.get("access_token"), data.get("refresh_token"))
@@ -193,8 +252,8 @@ class AccountController(QObject):
 
         self._request(f"token?grant_type={grant}", payload, key, finished)
 
-    def _request(self, path, payload, key, callback, bearer=None):
-        request = QNetworkRequest(QUrl(f"{PROJECT_URL}/auth/v1/{path}"))
+    def _request(self, path, payload, key, callback, bearer=None, api="auth/v1"):
+        request = QNetworkRequest(QUrl(f"{PROJECT_URL}/{api}/{path}"))
         request.setTransferTimeout(10_000)
         request.setAttribute(QNetworkRequest.Attribute.RedirectPolicyAttribute,
                              QNetworkRequest.RedirectPolicy.ManualRedirectPolicy)
@@ -212,10 +271,8 @@ class AccountController(QObject):
                 data = json.loads(bytes(reply.readAll()))
             except (UnicodeError, ValueError):
                 data = {}
-            if not isinstance(data, dict):
-                data = {}
             reply.deleteLater()
-            code = data.get("error_code")
+            code = (data.get("error_code") or data.get("code")) if isinstance(data, dict) else None
             callback(data, status, code if isinstance(code, str) else "")
 
         reply.finished.connect(finished)
