@@ -2,6 +2,7 @@
 
 import json
 import re
+from urllib.parse import urlencode
 
 import keyring
 from PySide6.QtCore import Property, QObject, QSettings, QUrl, Signal, Slot
@@ -11,6 +12,8 @@ from models.workspace_sync import WorkspaceAccountMismatch
 
 PROJECT_URL = "https://mjqyduegwtllzxgnmcit.supabase.co"
 DEFAULT_PUBLISHABLE_KEY = "sb_publishable_9ftGmjXokm_PgJKYk6xCUQ_0kWFoZy-"
+CONFIRMATION_URL = f"{PROJECT_URL}/functions/v1/confirmation-complete"
+CONFIRMATION_REDIRECT = urlencode({"redirect_to": CONFIRMATION_URL})
 PUBLISHABLE_KEY = re.compile(r"sb_publishable_[A-Za-z0-9_-]+")
 SIGN_UP_CONFIRMATION = "If a new account was created, check your email to confirm it, then sign in."
 KEY_SETTING = "supabase/publishable_key"
@@ -130,7 +133,28 @@ class AccountController(QObject):
                 message = "Unable to create the account. Check your connection and try again."
             self._finish(message)
 
-        self._request("signup", {"email": email, "password": password}, DEFAULT_PUBLISHABLE_KEY, completed)
+        self._request(f"signup?{CONFIRMATION_REDIRECT}", {"email": email, "password": password}, DEFAULT_PUBLISHABLE_KEY, completed)
+
+    @Slot(str)
+    def resendConfirmation(self, email):
+        email = email.strip()
+        if self._busy or self._has_session or not email:
+            return
+        self._begin()
+
+        def completed(_, status, code):
+            if 200 <= status < 300:
+                message = "If confirmation is pending, check your inbox for a new link."
+            elif status == 429:
+                message = "Too many attempts. Wait a moment and try again."
+            elif code == "email_address_not_authorized":
+                message = "This project’s email service cannot send to this address."
+            else:
+                message = "Unable to resend confirmation. Check your email address and connection."
+            self._finish(message)
+
+        self._request(f"resend?{CONFIRMATION_REDIRECT}", {"type": "signup", "email": email},
+                      DEFAULT_PUBLISHABLE_KEY, completed)
 
     @Slot(str, str)
     def signIn(self, email, password, publishable_key=DEFAULT_PUBLISHABLE_KEY):

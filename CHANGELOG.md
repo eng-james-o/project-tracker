@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Redesigned the sign-in and sign-up screens with password visibility controls and confirmation resend.
 - Supabase email sign-in and sign-up on the desktop startup screen.
 - Offline access for the last verified account using the operating system credential store.
 

@@ -3,10 +3,11 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
 from PySide6.QtCore import QCoreApplication, QSettings
 
-from models.account_controller import AccountController, KEY_SETTING, SIGN_UP_CONFIRMATION
+from models.account_controller import AccountController, CONFIRMATION_URL, KEY_SETTING, SIGN_UP_CONFIRMATION
 from models.workspace_sync import WorkspaceAccountMismatch
 
 
@@ -110,7 +111,8 @@ class AccountControllerTest(unittest.TestCase):
         with patch.object(controller, "_request") as request:
             controller.signUp(" test@example.com ", "a-strong-password")
             path, payload, _, callback = request.call_args.args
-            self.assertEqual(path, "signup")
+            self.assertEqual(urlsplit(path).path, "signup")
+            self.assertEqual(parse_qs(urlsplit(path).query)["redirect_to"], [CONFIRMATION_URL])
             self.assertEqual(payload["email"], "test@example.com")
             callback({"id": "new-account"}, 200, "")
         self.assertEqual(controller.message, SIGN_UP_CONFIRMATION)
@@ -141,3 +143,15 @@ class AccountControllerTest(unittest.TestCase):
         self.assertEqual(controller.email, "")
         self.assertFalse(controller.hasSession)
         self.assertIsNone(self.store.token)
+
+    def test_resend_uses_same_confirmation_redirect(self):
+        controller = AccountController()
+        with patch.object(controller, "_request") as request:
+            controller.resendConfirmation(" test@example.com ")
+            path, payload, _, callback = request.call_args.args
+            self.assertEqual(urlsplit(path).path, "resend")
+            self.assertEqual(parse_qs(urlsplit(path).query)["redirect_to"], [CONFIRMATION_URL])
+            self.assertEqual(payload, {"type": "signup", "email": "test@example.com"})
+            callback({}, 200, "")
+        self.assertIn("check your inbox", controller.message)
+        self.assertFalse(controller.hasSession)
