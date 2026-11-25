@@ -81,6 +81,8 @@ def load_window(app_dir, base_dir):
         "aiController", controllers.ai_controller
     )
 
+    engine.rootContext().setContextProperty("accountController", controllers.account_controller)
+
     main_qml = os.path.join(app_dir, "qml", "main.qml")
     engine.load(main_qml)
 

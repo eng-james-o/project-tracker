@@ -2,639 +2,286 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "components"
-import "views"
 import "."
 
 ApplicationWindow {
-    id: mainWindow
-    visible: true
-    width: 1100
-    height: 750
-    title: "Project Tracker Desktop"
+    width: 560
+    height: 700
+    minimumWidth: 390
+    minimumHeight: 420
+    title: "Project Tracker"
     color: Style.background
+    visible: accountController.email === ""
 
-    property bool isSidebarCollapsed: false
-    
-    // Navigation group expanded states (persisted between sessions)
-    SidebarSettings {
-        id: sidebarSettings
+    Component.onCompleted: accountController.restore()
+
+    onVisibleChanged: {
+        if (visible)
+            form.registering = false
     }
 
-    // Onboarding / profile editor, shown as a modal on first launch
-    OnboardingView {
-        id: onboardingView
-        objectName: "onboardingView"
-    }
-
-    Component.onCompleted: {
-        if (!profileController.onboardingCompleted) {
-            onboardingView.openForSetup()
+    component AccountTab: TabButton {
+        id: tab
+        hoverEnabled: true
+        implicitHeight: 40
+        contentItem: Label {
+            text: tab.text
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            color: tab.checked ? Style.info : Style.textSecondary
+            font.bold: tab.checked
+        }
+        background: Rectangle {
+            radius: 9
+            color: tab.checked ? Style.surface : (tab.hovered ? Style.ghostHover : "transparent")
+            border.color: tab.activeFocus ? Style.primary : (tab.checked ? Style.border : "transparent")
         }
     }
 
-    // Dialog for creating / editing projects
-    ProjectDialog {
-        id: projectDialog
-        anchors.centerIn: parent
-        onAccepted: {
-            if (isEdit) {
-                projectController.update_project(
-                    projectId,
-                    projectTitle,
-                    clientName,
-                    clientEmail,
-                    status,
-                    deadline,
-                    description,
-                    price,
-                    paidAmount,
-                    currency,
-                    tags,
-                    companyId,
-                    isPersonal
-                )
-            } else {
-                projectController.add_project(
-                    projectTitle,
-                    clientName,
-                    clientEmail,
-                    status,
-                    deadline,
-                    description,
-                    price,
-                    paidAmount,
-                    currency,
-                    tags,
-                    companyId,
-                    isPersonal
-                )
-            }
+    component PasswordEntry: CustomTextField {
+        id: field
+        property bool revealed: false
+
+        echoMode: revealed ? TextInput.Normal : TextInput.Password
+        inputMethodHints: Qt.ImhSensitiveData | Qt.ImhHiddenText | Qt.ImhNoPredictiveText
+        rightPadding: 72
+
+        onTextChanged: {
+            if (text === "")
+                revealed = false
+        }
+
+        CustomButton {
+            objectName: field.objectName + "Visibility"
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: 3
+            width: 64
+            height: 32
+            variant: "ghost"
+            text: field.revealed ? "Hide" : "Show"
+            Accessible.name: (field.revealed ? "Hide " : "Show ") + field.label.toLowerCase()
+            onClicked: field.revealed = !field.revealed
         }
     }
 
-    // Command Palette (Ctrl+K)
-    CommandPalette {
-        id: commandPalette
-        projectController: projectController
-        templateController: templateController
-        profileController: profileController
-    }
+    WorkspaceWindow { objectName: "workspaceWindow" }
 
-    // Shortcut for opening command palette
-    Shortcut {
-        sequence: "Ctrl+K"
-        onActivated: commandPalette.open()
-    }
-
-    // Additional keyboard shortcuts
-    Shortcut {
-        sequence: "Ctrl+N"
-        onActivated: {
-            projectDialog.setProject(null)
-            projectDialog.open()
-        }
-    }
-
-    Shortcut {
-        sequence: "Ctrl+F"
-        onActivated: {
-            mainWindow.mainStack.currentIndex = 1
-            mainWindow.projectsView.searchBox.focus = true
-        }
-    }
-
-    Shortcut {
-        sequence: "Ctrl+1"
-        onActivated: mainWindow.mainStack.currentIndex = 0
-    }
-
-    Shortcut {
-        sequence: "Ctrl+2"
-        onActivated: mainWindow.mainStack.currentIndex = 1
-    }
-
-    Shortcut {
-        sequence: "Ctrl+3"
-        onActivated: mainWindow.mainStack.currentIndex = 2
-    }
-
-    Shortcut {
-        sequence: "Esc"
-        onActivated: {
-            // Close any open dialogs
-            projectDialog.close()
-            templateDialog.close()
-            commandPalette.close()
-        }
-    }
-
-    // Notification Center
-    NotificationCenter {
-        id: notificationCenter
-        notificationController: notificationController
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.topMargin: 60
-        visible: false
-    }
-
-    // AI Assistant Drawer
-    AIAssistantDrawer {
-        id: aiAssistantDrawer
-        objectName: "assistantDrawer"
-    }
-
-    RowLayout {
+    ScrollView {
         anchors.fill: parent
-        spacing: 0
+        contentWidth: availableWidth
+        clip: true
 
-        // Collapsible Sidebar Navigation
-        Flickable {
-            id: sidebarFlick
-            Layout.fillHeight: true
-            implicitWidth: mainWindow.isSidebarCollapsed ? 64 : 220
-            contentHeight: sidebarContent.height
-            flickableDirection: Flickable.VerticalFlick
-            clip: true
+        ColumnLayout {
+            id: form
+            width: Math.min(parent.width - 48, 448)
+            x: (parent.width - width) / 2
+            spacing: 18
+            property bool registering: false
+            readonly property bool mismatch: registering && confirmation.text !== "" && confirmation.text !== password.text
+            readonly property bool ready: !accountController.busy && email.text.trim() !== "" && password.text !== ""
+                                          && (!registering || password.text === confirmation.text)
 
-            Behavior on implicitWidth {
-                NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
+            function switchMode(register) {
+                registering = register
+                password.clear()
+                confirmation.clear()
+                password.revealed = false
+                confirmation.revealed = false
+                accountController.clearMessage()
+            }
+
+            function submit() {
+                if (!ready)
+                    return
+                if (registering)
+                    accountController.signUp(email.text, password.text)
+                else
+                    accountController.signIn(email.text, password.text)
+                password.clear()
+                confirmation.clear()
+                password.revealed = false
+                confirmation.revealed = false
+            }
+
+            Item { implicitHeight: 18 }
+
+            RowLayout {
+                spacing: 12
+                Image {
+                    source: "../assets/app-icon.svg"
+                    sourceSize.width: 44
+                    sourceSize.height: 44
+                    Layout.preferredWidth: 44
+                    Layout.preferredHeight: 44
+                }
+                Label {
+                    text: "Project Tracker"
+                    color: Style.textMain
+                    font.pixelSize: 20
+                    font.bold: true
+                }
             }
 
             Rectangle {
-                id: sidebarContent
-                width: sidebarFlick.width
-                height: Math.max(sidebarFlick.height, navigation.implicitHeight + 40)
+                Layout.fillWidth: true
+                implicitHeight: card.implicitHeight + 52
                 color: Style.surface
                 border.color: Style.border
-                border.width: 1
+                radius: 22
 
                 ColumnLayout {
-                    id: navigation
-                    anchors.fill: parent
-                    anchors.topMargin: 20
-                    anchors.leftMargin: mainWindow.isSidebarCollapsed ? 10 : 16
-                    anchors.rightMargin: mainWindow.isSidebarCollapsed ? 10 : 16
-                    anchors.bottomMargin: 20
-                    spacing: 16
+                    id: card
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.margins: 26
+                    spacing: 14
 
-                // Header Branding & Collapse Toggle Button
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    Rectangle {
-                        implicitWidth: 36
-                        implicitHeight: 36
-                        radius: Style.radiusMedium
-                        color: Style.primary
-                        visible: !mainWindow.isSidebarCollapsed
-                        Image {
-                            anchors.centerIn: parent
-                            source: "../assets/app-icon.svg"
-                            sourceSize.width: 22
-                            sourceSize.height: 22
-                        }
-                    }
-
-                    Text {
-                        text: "ProjectTracker"
-                        font.pixelSize: 17
-                        font.bold: true
+                    Label {
+                        Layout.fillWidth: true
+                        text: accountController.hasSession ? "Restore your session"
+                              : form.registering ? "Create your account" : "Welcome back"
                         color: Style.textMain
-                        visible: !mainWindow.isSidebarCollapsed
-                        Layout.fillWidth: true
-                        elide: Text.ElideRight
+                        font.pixelSize: 30
+                        font.bold: true
+                        wrapMode: Text.Wrap
                     }
 
-                    CustomButton {
-                        variant: "icon"
-                        iconSource: "../../assets/sidebar.svg"
-                        ToolTip.text: "Toggle Sidebar"
-                        ToolTip.delay: 300
-                        onClicked: mainWindow.isSidebarCollapsed = !mainWindow.isSidebarCollapsed
-                    }
-                }
-
-                // ===== PROJECTS GROUP =====
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 4
-
-                    // Group header with highlight
-                    Rectangle {
+                    Label {
+                        visible: !accountController.hasSession
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 40
-                        color: mainWindow.isSidebarCollapsed ? "transparent" : 
-                               (mainStack.currentIndex === 0 || mainStack.currentIndex === 1 || 
-                                mainStack.currentIndex === 2 || mainStack.currentIndex === 3) ? 
-                               Qt.alpha(Style.primary, 0.1) : "transparent"
-                        radius: Style.radiusSmall
+                        text: form.registering ? "Confirm your email to start using Project Tracker."
+                                               : "Sign in to open your workspace."
+                        color: Style.textSecondary
+                        font.pixelSize: 14
+                        wrapMode: Text.Wrap
+                    }
 
-                        CustomButton {
-                            anchors.fill: parent
-                            text: mainWindow.isSidebarCollapsed ? "" : "Projects"
-                            iconSource: "../../assets/projects.svg"
-                            variant: "ghost"
-                            onClicked: sidebarSettings.toggle("projects")
-                            ToolTip.text: "Projects - Dashboard, All Projects, Project Board"
-                            ToolTip.delay: 300
-
-                            // Expand/collapse indicator
-                            Image {
-                                anchors.right: parent.right
-                                anchors.rightMargin: 8
-                                anchors.verticalCenter: parent.verticalCenter
-                                sourceSize.width: 14
-                                sourceSize.height: 14
-                                source: "../assets/arrow-left.svg"
-                                rotation: sidebarSettings.projectsExpanded ? -90 : 180
-                                visible: !mainWindow.isSidebarCollapsed
-                            }
+                    TabBar {
+                        objectName: "accountTabs"
+                        Layout.fillWidth: true
+                        padding: 4
+                        spacing: 4
+                        visible: !accountController.hasSession
+                        enabled: !accountController.busy
+                        currentIndex: form.registering ? 1 : 0
+                        onCurrentIndexChanged: {
+                            if ((currentIndex === 1) !== form.registering)
+                                form.switchMode(currentIndex === 1)
                         }
+                        background: Rectangle { color: Style.secondary; radius: 12 }
+                        AccountTab { text: "Sign in" }
+                        AccountTab { text: "Sign up" }
                     }
 
-                    // Group items (collapsed by default)
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 4
-                        visible: sidebarSettings.projectsExpanded
+                        visible: !accountController.hasSession
+                        enabled: !accountController.busy
+                        spacing: 12
 
-                        CustomButton {
+                        CustomTextField {
+                            id: email
                             Layout.fillWidth: true
-                            text: mainWindow.isSidebarCollapsed ? "" : "Dashboard"
-                            iconSource: "../../assets/dashboard.svg"
-                            variant: mainStack.currentIndex === 0 ? "primary" : "ghost"
-                            onClicked: mainStack.currentIndex = 0
-                            ToolTip.text: "Dashboard - Overview of your projects and metrics"
-                            ToolTip.delay: 300
+                            label: "Email address"
+                            Accessible.name: label
+                            inputMethodHints: Qt.ImhEmailCharactersOnly
+                            onAccepted: password.forceActiveFocus()
                         }
-
-                        CustomButton {
+                        PasswordEntry {
+                            id: password
+                            objectName: "accountPassword"
                             Layout.fillWidth: true
-                            text: mainWindow.isSidebarCollapsed ? "" : "All Projects"
-                            iconSource: "../../assets/projects.svg"
-                            variant: mainStack.currentIndex === 1 ? "primary" : "ghost"
-                            onClicked: mainStack.currentIndex = 1
-                            ToolTip.text: "All Projects - View and manage all your projects"
-                            ToolTip.delay: 300
+                            label: "Password"
+                            Accessible.name: label
+                            onAccepted: {
+                                if (form.registering)
+                                    confirmation.forceActiveFocus()
+                                else
+                                    form.submit()
+                            }
                         }
-
-                        CustomButton {
+                        PasswordEntry {
+                            id: confirmation
+                            objectName: "passwordConfirmation"
                             Layout.fillWidth: true
-                            text: mainWindow.isSidebarCollapsed ? "" : "Project Board"
-                            iconSource: "../../assets/board.svg"
-                            variant: mainStack.currentIndex === 3 ? "primary" : "ghost"
-                            onClicked: mainStack.currentIndex = 3
-                            ToolTip.text: "Project Board - Kanban-style view of your projects"
-                            ToolTip.delay: 300
+                            visible: form.registering
+                            label: "Confirm password"
+                            Accessible.name: label
+                            onAccepted: form.submit()
                         }
-
+                        Label {
+                            visible: form.mismatch
+                            text: "Passwords do not match."
+                            color: Style.danger
+                        }
                         CustomButton {
+                            id: submitButton
                             Layout.fillWidth: true
-                            text: mainWindow.isSidebarCollapsed ? "" : "New Project"
-                            iconSource: "../../assets/plus.svg"
+                            Layout.preferredHeight: 44
+                            text: form.registering ? "Create account" : "Sign in"
+                            enabled: form.ready
+                            contentItem: Label {
+                                text: submitButton.text
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                font.bold: true
+                                color: submitButton.enabled ? Style.surface : Style.textLight
+                            }
+                            onClicked: form.submit()
+                        }
+                        CustomButton {
+                            Layout.alignment: Qt.AlignHCenter
+                            visible: email.text.trim() !== ""
+                            text: "Resend confirmation"
+                            variant: "ghost"
+                            onClicked: accountController.resendConfirmation(email.text)
+                        }
+                    }
+
+                    RowLayout {
+                        visible: accountController.hasSession
+                        enabled: !accountController.busy
+                        CustomButton {
+                            text: "Retry session"
+                            onClicked: accountController.restore()
+                        }
+                        CustomButton {
+                            text: "Sign out"
                             variant: "secondary"
-                            onClicked: {
-                                projectDialog.setProject(null)
-                                projectDialog.open()
-                            }
-                            ToolTip.text: "New Project - Create a new project"
-                            ToolTip.delay: 300
+                            onClicked: accountController.signOut()
                         }
                     }
-                }
 
-                // Divider between groups
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 1
-                    color: Style.border
-                    visible: !mainWindow.isSidebarCollapsed
-                }
+                    ProgressBar {
+                        Layout.fillWidth: true
+                        visible: accountController.busy
+                        indeterminate: true
+                        Accessible.name: "Connecting"
+                    }
 
-                // ===== PLANNING GROUP =====
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 4
-
-                    // Group header with highlight
                     Rectangle {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 40
-                        color: mainWindow.isSidebarCollapsed ? "transparent" : 
-                               mainStack.currentIndex === 4 ? 
-                               Qt.alpha(Style.success, 0.1) : "transparent"
-                        radius: Style.radiusSmall
+                        visible: feedback.text !== ""
+                        implicitHeight: feedback.implicitHeight + 20
+                        color: Style.secondary
+                        radius: 10
 
-                        CustomButton {
+                        Label {
+                            id: feedback
                             anchors.fill: parent
-                            text: mainWindow.isSidebarCollapsed ? "" : "Planning"
-                            iconSource: "../../assets/goals.svg"
-                            variant: "ghost"
-                            onClicked: sidebarSettings.toggle("planning")
-                            ToolTip.text: "Planning - Goals and objectives"
-                            ToolTip.delay: 300
-
-                            Image {
-                                anchors.right: parent.right
-                                anchors.rightMargin: 8
-                                anchors.verticalCenter: parent.verticalCenter
-                                sourceSize.width: 14
-                                sourceSize.height: 14
-                                source: "../assets/arrow-left.svg"
-                                rotation: sidebarSettings.planningExpanded ? -90 : 180
-                                visible: !mainWindow.isSidebarCollapsed
-                            }
-                        }
-                    }
-
-                    // Group items
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 4
-                        visible: sidebarSettings.planningExpanded
-
-                        CustomButton {
-                            Layout.fillWidth: true
-                            text: mainWindow.isSidebarCollapsed ? "" : "Goals"
-                            iconSource: "../../assets/goals.svg"
-                            variant: mainStack.currentIndex === 4 ? "primary" : "ghost"
-                            onClicked: mainStack.currentIndex = 4
-                            ToolTip.text: "Goals - Set and track your goals"
-                            ToolTip.delay: 300
+                            anchors.margins: 10
+                            text: accountController.message
+                            textFormat: Text.PlainText
+                            color: Style.textSecondary
+                            wrapMode: Text.Wrap
                         }
                     }
                 }
-
-                // Divider
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 1
-                    color: Style.border
-                    visible: !mainWindow.isSidebarCollapsed
-                }
-
-                // ===== MANAGEMENT GROUP =====
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 4
-
-                    // Group header with highlight
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 40
-                        color: mainWindow.isSidebarCollapsed ? "transparent" : 
-                               mainStack.currentIndex === 5 ? 
-                               Qt.alpha(Style.warning, 0.1) : "transparent"
-                        radius: Style.radiusSmall
-
-                        CustomButton {
-                            anchors.fill: parent
-                            text: mainWindow.isSidebarCollapsed ? "" : "Management"
-                            iconSource: "../../assets/audit.svg"
-                            variant: "ghost"
-                            onClicked: sidebarSettings.toggle("management")
-                            ToolTip.text: "Management - Activity and audit logs"
-                            ToolTip.delay: 300
-
-                            Image {
-                                anchors.right: parent.right
-                                anchors.rightMargin: 8
-                                anchors.verticalCenter: parent.verticalCenter
-                                sourceSize.width: 14
-                                sourceSize.height: 14
-                                source: "../assets/arrow-left.svg"
-                                rotation: sidebarSettings.managementExpanded ? -90 : 180
-                                visible: !mainWindow.isSidebarCollapsed
-                            }
-                        }
-                    }
-
-                    // Group items
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 4
-                        visible: sidebarSettings.managementExpanded
-
-                        CustomButton {
-                            Layout.fillWidth: true
-                            text: mainWindow.isSidebarCollapsed ? "" : "Activity & Audit"
-                            iconSource: "../../assets/audit.svg"
-                            variant: mainStack.currentIndex === 5 ? "primary" : "ghost"
-                            onClicked: mainStack.currentIndex = 5
-                            ToolTip.text: "Activity & Audit - View project history and audit logs"
-                            ToolTip.delay: 300
-                        }
-                    }
-                }
-
-                // Divider
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 1
-                    color: Style.border
-                    visible: !mainWindow.isSidebarCollapsed
-                }
-
-                // ===== TOOLS GROUP =====
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 4
-
-                    // Group header with highlight
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 40
-                        color: mainWindow.isSidebarCollapsed ? "transparent" : 
-                               mainStack.currentIndex === 7 || mainStack.currentIndex === 8 ? 
-                               Qt.alpha(Style.info, 0.1) : "transparent"
-                        radius: Style.radiusSmall
-
-                        CustomButton {
-                            anchors.fill: parent
-                            text: mainWindow.isSidebarCollapsed ? "" : "Tools"
-                            iconSource: "../../assets/package.svg"
-                            variant: "ghost"
-                            onClicked: sidebarSettings.toggle("tools")
-                            ToolTip.text: "Tools - AI Assistant and Notifications"
-                            ToolTip.delay: 300
-
-                            Image {
-                                anchors.right: parent.right
-                                anchors.rightMargin: 8
-                                anchors.verticalCenter: parent.verticalCenter
-                                sourceSize.width: 14
-                                sourceSize.height: 14
-                                source: "../assets/arrow-left.svg"
-                                rotation: sidebarSettings.toolsExpanded ? -90 : 180
-                                visible: !mainWindow.isSidebarCollapsed
-                            }
-                        }
-                    }
-
-                    // Group items
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 4
-                        visible: sidebarSettings.toolsExpanded
-
-                        CustomButton {
-                            Layout.fillWidth: true
-                            text: mainWindow.isSidebarCollapsed ? "" : "AI Assistant"
-                            iconSource: "../../assets/outstanding.svg"
-                            variant: "ghost"
-                            onClicked: aiAssistantDrawer.open()
-                            ToolTip.text: "AI Assistant - Get help from AI for project planning and more"
-                            ToolTip.delay: 300
-                        }
-
-                        CustomButton {
-                            Layout.fillWidth: true
-                            text: mainWindow.isSidebarCollapsed ? "" : "Notifications"
-                            iconSource: "../../assets/outstanding.svg"
-                            variant: notificationController.notifications.length > 0 ? "primary" : "ghost"
-                            onClicked: notificationCenter.visible = !notificationCenter.visible
-                            ToolTip.text: "Notifications - View your notifications"
-                            ToolTip.delay: 300
-
-                            Rectangle {
-                                anchors.top: parent.top
-                                anchors.right: parent.right
-                                width: 18
-                                height: 18
-                                radius: 9
-                                color: Style.danger
-                                visible: notificationController.notifications.length > 0
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: notificationController.notifications.length
-                                    font.pixelSize: 10
-                                    font.bold: true
-                                    color: Style.surface
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Divider
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 1
-                    color: Style.border
-                    visible: !mainWindow.isSidebarCollapsed
-                }
-
-                // ===== SETTINGS (Always visible) =====
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 40
-                    color: mainWindow.isSidebarCollapsed ? "transparent" : 
-                           mainStack.currentIndex === 6 ? 
-                           Qt.alpha(Style.secondary, 0.1) : "transparent"
-                    radius: Style.radiusSmall
-
-                    CustomButton {
-                        anchors.fill: parent
-                        text: mainWindow.isSidebarCollapsed ? "" : "Settings"
-                        iconSource: "../../assets/settings.svg"
-                        variant: mainStack.currentIndex === 6 ? "primary" : "ghost"
-                        onClicked: mainStack.currentIndex = 6
-                        ToolTip.text: "Settings - Configure application settings"
-                        ToolTip.delay: 300
-                    }
-                }
-
-                Item { Layout.fillHeight: true }
-
-            }
-        }
-        }
-
-        // Main StackView / Content Area
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-
-        StackLayout {
-            id: mainStack
-            objectName: "mainStack"
-            anchors.fill: parent
-            currentIndex: 0
-
-            DashboardView {
-                onNavigateToProjects: mainStack.currentIndex = 1
-                onSelectProject: function(pid) {
-                    mainStack.currentIndex = 2
-                }
             }
 
-            ProjectsView {
-                id: projectsView
-                onSelectProject: function(pid) {
-                    mainStack.currentIndex = 2
-                }
-            }
-
-            ProjectDetailView {
-                onBackClicked: mainStack.currentIndex = 1
-                onNavigateToAuditView: mainStack.currentIndex = 5
-            }
-
-            ProjectBoardView {}
-
-            GoalsView {}
-
-            AuditLogView {}
-
-            SettingsView {
-                onEditProfileRequested: onboardingView.openForEdit()
-            }
-        }
-
-        ToolButton {
-            objectName: "openAssistant"
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            z: 9
-            icon.source: "../assets/sidebar.svg"
-            Accessible.name: "Open AI Assistant"
-            ToolTip.visible: hovered
-            ToolTip.text: Accessible.name
-            onClicked: aiAssistantDrawer.open()
-        }
-
-        RoundButton {
-            id: scrollTop
-            objectName: "scrollToTop"
-            readonly property var page: mainStack.children[mainStack.currentIndex]
-            readonly property var viewport: page ? page.contentItem : null
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 20
-            width: 40
-            height: 40
-            radius: width / 2
-            z: 10
-            text: "↑"
-            font.pixelSize: 22
-            Accessible.name: "Back to top"
-            visible: viewport && !viewport.atYBeginning && (viewport.moving || activity.running || down)
-            onViewportChanged: activity.stop()
-            onClicked: {
-                viewport.cancelFlick()
-                viewport.contentY = viewport.originY
-                activity.stop()
-            }
-            // Wheel steps and scrollbar drags can change contentY without a flick.
-            Timer { id: activity; interval: 350 }
-            Connections {
-                target: scrollTop.viewport
-                function onContentYChanged() { activity.restart() }
-            }
-        }
+            Item { implicitHeight: 18 }
         }
     }
 }

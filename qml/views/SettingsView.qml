@@ -89,6 +89,49 @@ ScrollView {
 
         ColumnLayout {
             Layout.fillWidth: true
+
+            Label {
+                text: "Project Tracker account"
+                color: Style.textMain
+                font.bold: true
+                font.pixelSize: 16
+            }
+            Label {
+                text: "Signing in syncs this workspace’s projects, steps, deliverables, and portable resources. Local projects work offline."
+                color: Style.textSecondary
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+            }
+            Label {
+                visible: accountController.email !== ""
+                text: "Signed in as " + accountController.email
+                textFormat: Text.PlainText
+                color: Style.textMain
+            }
+            RowLayout {
+                visible: accountController.hasSession
+                enabled: !accountController.busy
+                CustomButton {
+                    text: accountController.email === "" ? "Retry session" : "Sync now"
+                    onClicked: accountController.restore()
+                }
+                CustomButton {
+                    text: "Sign out"
+                    onClicked: accountController.signOut()
+                }
+            }
+            Label {
+                visible: text !== ""
+                text: accountController.busy ? "Connecting…" : accountController.message
+                textFormat: Text.PlainText
+                color: Style.textSecondary
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+            }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
             Label { text: "AI Assistant"; color: Style.textMain; font.bold: true; font.pixelSize: 16 }
             Label { text: "Provider"; color: Style.textSecondary }
             CustomComboBox {

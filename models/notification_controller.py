@@ -20,6 +20,7 @@ class NotificationController(QObject):
         self.db = db
         self._notifications: List[Dict[str, Any]] = []
         self._tray_icon = None
+        self._workspace_unlocked = True
         self._check_timer = QTimer()
         self._check_timer.timeout.connect(self.check_upcoming_deadlines)
         self._check_timer.start(60000)  # Check every minute
@@ -34,8 +35,23 @@ class NotificationController(QObject):
         self._tray_icon.setToolTip("Project Tracker")
         self._tray_icon.show()
 
+    def set_workspace_unlocked(self, unlocked):
+        if self._workspace_unlocked == unlocked:
+            return
+        self._workspace_unlocked = unlocked
+        if self._tray_icon is not None:
+            self._tray_icon.setVisible(unlocked)
+        if unlocked:
+            self._check_timer.start(60000)
+        else:
+            self._check_timer.stop()
+            self._notifications.clear()
+            self.notificationsChanged.emit()
+
     @Slot()
     def check_upcoming_deadlines(self):
+        if not self._workspace_unlocked:
+            return
         now = datetime.now()
         
         # Check projects with deadlines in the next 24 hours
