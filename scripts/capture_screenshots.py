@@ -55,7 +55,8 @@ def main():
         controller = controllers.account_controller
         controller._email = "preview@example.test"
         controller.changed.emit()
-        window = engine.rootObjects()[0].findChild(QQuickWindow, "workspaceWindow")
+        app.processEvents()
+        window = next(item for item in app.topLevelWindows() if item.objectName() == "workspaceWindow")
         stack = window.findChild(QObject, "mainStack")
         onboarding = window.findChild(QObject, "onboardingView")
         project = controllers.project_controller
