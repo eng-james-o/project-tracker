@@ -1,11 +1,13 @@
+import json
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from pathlib import Path
 
 from PySide6.QtCore import QCoreApplication, QSettings
 
-from models.account_controller import AccountController, KEY_SETTING
+from models.account_controller import AccountController, KEY_SETTING, SIGN_UP_CONFIRMATION
+from models.workspace_sync import WorkspaceAccountMismatch
 
 
 class MemoryCredentialStore:
@@ -22,7 +24,7 @@ class MemoryCredentialStore:
 
 
 def session(refresh_token):
-    return {"user": {"email": "test@example.com"}, "access_token": "access", "refresh_token": refresh_token}
+    return {"user": {"email": "test@example.com", "id": "verified-account"}, "access_token": "access", "refresh_token": refresh_token}
 
 
 class AccountControllerTest(unittest.TestCase):
@@ -58,7 +60,7 @@ class AccountControllerTest(unittest.TestCase):
             callback(session("first"), 200, "")
         self.assertTrue(controller.hasSession)
         self.assertEqual(self.settings.value(KEY_SETTING), "sb_publishable_example")
-        self.assertEqual(self.store.token, "first")
+        self.assertEqual(json.loads(self.store.token)["refresh_token"], "first")
         self.assertNotIn("first", Path(self.settings.fileName()).read_text(encoding="utf-8"))
 
         restarted = AccountController()
@@ -69,7 +71,7 @@ class AccountControllerTest(unittest.TestCase):
             self.assertEqual(payload, {"refresh_token": "first"})
             callback(session("rotated"), 200, "")
         self.assertEqual(restarted.email, "test@example.com")
-        self.assertEqual(self.store.token, "rotated")
+        self.assertEqual(json.loads(self.store.token)["refresh_token"], "rotated")
 
     def test_offline_restore_retains_token_and_sign_out_clears_it(self):
         self.settings.setValue(KEY_SETTING, "sb_publishable_example")
@@ -101,3 +103,41 @@ class AccountControllerTest(unittest.TestCase):
             request.reset_mock()
             controller.signIn("test@example.com", "password", "sb_secret_example")
             request.assert_not_called()
+
+    def test_sign_up_prompts_for_confirmation_without_opening_workspace(self):
+        workspace = Mock()
+        controller = AccountController(workspace=workspace)
+        with patch.object(controller, "_request") as request:
+            controller.signUp(" test@example.com ", "a-strong-password")
+            path, payload, _, callback = request.call_args.args
+            self.assertEqual(path, "signup")
+            self.assertEqual(payload["email"], "test@example.com")
+            callback({"id": "new-account"}, 200, "")
+        self.assertEqual(controller.message, SIGN_UP_CONFIRMATION)
+        self.assertFalse(controller.hasSession)
+        self.assertEqual(controller.email, "")
+        self.assertIsNone(self.store.token)
+        workspace.bind_account.assert_not_called()
+
+    def test_verified_account_can_restore_offline(self):
+        self.store.token = json.dumps({"refresh_token": "saved", "email": "test@example.com",
+                                       "user_id": "verified-account"})
+        workspace = Mock()
+        controller = AccountController(workspace=workspace)
+        with patch.object(controller, "_request") as request:
+            controller.restore()
+            self.assertEqual(controller.email, "")
+            request.call_args.args[3]({}, 0, "")
+        self.assertEqual(controller.email, "test@example.com")
+        workspace.bind_account.assert_called_once_with("verified-account")
+
+    def test_different_account_cannot_open_existing_workspace(self):
+        workspace = Mock()
+        workspace.bind_account.side_effect = WorkspaceAccountMismatch()
+        controller = AccountController(workspace=workspace)
+        with patch.object(controller, "_request") as request:
+            controller.signIn("test@example.com", "password")
+            request.call_args.args[3](session("new-token"), 200, "")
+        self.assertEqual(controller.email, "")
+        self.assertFalse(controller.hasSession)
+        self.assertIsNone(self.store.token)

@@ -38,22 +38,31 @@ class WorkspaceSync:
     def __init__(self, database):
         self.database = database
 
+    def bind_account(self, owner):
+        with self.database.get_connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            self._bind_account(conn, owner)
+
+    @staticmethod
+    def _bind_account(conn, owner):
+        conn.execute("""CREATE TABLE IF NOT EXISTS tracker_sync_account
+                      (id INTEGER PRIMARY KEY CHECK(id=1), owner TEXT NOT NULL)""")
+        account = conn.execute("SELECT owner FROM tracker_sync_account WHERE id=1").fetchone()
+        if account and account["owner"] != owner:
+            raise WorkspaceAccountMismatch()
+        if not account:
+            conn.execute("INSERT INTO tracker_sync_account VALUES (1, ?)", (owner,))
+
     def prepare(self, owner, snapshot):
         if set(snapshot) != set(KINDS) or any(not isinstance(snapshot[k], list) for k in KINDS):
             raise ValueError("Invalid cloud snapshot")
         with self.database.get_connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
-            conn.execute("""CREATE TABLE IF NOT EXISTS tracker_sync_account
-                          (id INTEGER PRIMARY KEY CHECK(id=1), owner TEXT NOT NULL)""")
+            self._bind_account(conn, owner)
             conn.execute("""CREATE TABLE IF NOT EXISTS tracker_sync_records (
                 kind TEXT NOT NULL, local_id INTEGER NOT NULL, remote_id TEXT NOT NULL,
                 version INTEGER NOT NULL, baseline TEXT NOT NULL,
                 PRIMARY KEY(kind, local_id), UNIQUE(kind, remote_id))""")
-            account = conn.execute("SELECT owner FROM tracker_sync_account WHERE id=1").fetchone()
-            if account and account["owner"] != owner:
-                raise WorkspaceAccountMismatch()
-            if not account:
-                conn.execute("INSERT INTO tracker_sync_account VALUES (1, ?)", (owner,))
             self._assign_ids(conn)
 
             conflicts = 0

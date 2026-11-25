@@ -1,4 +1,4 @@
-"""Optional Project Tracker account for the desktop client."""
+"""Supabase authentication and workspace sync for the desktop client."""
 
 import json
 import re
@@ -10,12 +10,14 @@ from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
 from models.workspace_sync import WorkspaceAccountMismatch
 
 PROJECT_URL = "https://mjqyduegwtllzxgnmcit.supabase.co"
+DEFAULT_PUBLISHABLE_KEY = "sb_publishable_9ftGmjXokm_PgJKYk6xCUQ_0kWFoZy-"
 PUBLISHABLE_KEY = re.compile(r"sb_publishable_[A-Za-z0-9_-]+")
+SIGN_UP_CONFIRMATION = "If a new account was created, check your email to confirm it, then sign in."
 KEY_SETTING = "supabase/publishable_key"
 KEYRING_SERVICE = "ProjectTrackerDesktop:mjqyduegwtllzxgnmcit"
 KEYRING_ENTRY = "refresh-token"
 EXPIRED_CODES = {
-    "refresh_token_not_found", "refresh_token_already_used", "session_not_found",
+    "bad_jwt", "invalid_grant", "refresh_token_not_found", "refresh_token_already_used", "session_not_found",
     "session_expired", "user_not_found", "user_banned",
 }
 PLATFORM_KEYRINGS = {
@@ -42,15 +44,11 @@ class AccountController(QObject):
         self._workspace = workspace
         self._on_refresh = on_refresh
         self._settings = QSettings()
-        self._key = self._settings.value(KEY_SETTING, "", type=str)
+        self._key = self._settings.value(KEY_SETTING, DEFAULT_PUBLISHABLE_KEY, type=str)
         self._email = ""
         self._has_session = False
         self._busy = False
         self._message = ""
-
-    @Property(str, notify=changed)
-    def publishableKey(self):
-        return self._key
 
     @Property(str, notify=changed)
     def email(self):
@@ -68,26 +66,74 @@ class AccountController(QObject):
     def message(self):
         return self._message
 
+    def _saved_account(self):
+        raw = platform_keyring().get_password(KEYRING_SERVICE, KEYRING_ENTRY)
+        if not raw:
+            return {}
+        if not raw.startswith("{"):
+            return {"refresh_token": raw}
+        credentials = json.loads(raw)
+        if not all(isinstance(credentials.get(field), str) and credentials[field]
+                   for field in ("refresh_token", "email", "user_id")):
+            raise ValueError("Invalid saved session")
+        return credentials
+
     @Slot()
     def restore(self):
-        if self._busy or not self._key:
+        if self._busy:
             return
         try:
-            refresh_token = platform_keyring().get_password(KEYRING_SERVICE, KEYRING_ENTRY)
+            saved = self._saved_account()
         except Exception:
             self._finish("Secure session storage is unavailable. Check your system credential store.")
             return
-        if not refresh_token:
+        if not saved:
             return
         self._has_session = True
         if not PUBLISHABLE_KEY.fullmatch(self._key):
-            self._finish("The saved connection key is invalid. Sign out and enter the project’s publishable key.")
+            self._key = DEFAULT_PUBLISHABLE_KEY
+        self._begin()
+        self._token("refresh_token", {"refresh_token": saved["refresh_token"]}, self._key,
+                    lambda session, status, code: self._restore_finished(session, status, code, saved))
+
+    @Slot()
+    def clearMessage(self):
+        if not self._busy:
+            self._finish()
+
+    @Slot(str, str)
+    def signUp(self, email, password):
+        if self._busy or self._has_session:
+            return
+        email = email.strip()
+        if not email or not password:
+            self._finish("Enter your account email and password.")
             return
         self._begin()
-        self._token("refresh_token", {"refresh_token": refresh_token}, self._key, self._restore_finished)
 
-    @Slot(str, str, str)
-    def signIn(self, email, password, publishable_key):
+        def completed(_, status, code):
+            if 200 <= status < 300 or code in {"user_already_exists", "email_exists"}:
+                message = SIGN_UP_CONFIRMATION
+            elif code == "signup_disabled":
+                message = "New account registration is disabled."
+            elif code == "weak_password":
+                message = "Choose a stronger password."
+            elif code == "email_address_invalid":
+                message = "Enter a valid email address."
+            elif code == "validation_failed":
+                message = "Check your email address and password."
+            elif code == "email_address_not_authorized":
+                message = "This project’s email service cannot send to this address."
+            elif status == 429:
+                message = "Too many attempts. Wait a moment and try again."
+            else:
+                message = "Unable to create the account. Check your connection and try again."
+            self._finish(message)
+
+        self._request("signup", {"email": email, "password": password}, DEFAULT_PUBLISHABLE_KEY, completed)
+
+    @Slot(str, str)
+    def signIn(self, email, password, publishable_key=DEFAULT_PUBLISHABLE_KEY):
         if self._busy or self._has_session:
             return
         email, publishable_key = email.strip(), publishable_key.strip()
@@ -128,7 +174,7 @@ class AccountController(QObject):
             return
         try:
             backend = platform_keyring()
-            refresh_token = backend.get_password(KEYRING_SERVICE, KEYRING_ENTRY)
+            refresh_token = self._saved_account().get("refresh_token")
             if refresh_token:
                 backend.delete_password(KEYRING_SERVICE, KEYRING_ENTRY)
         except Exception:
@@ -154,9 +200,13 @@ class AccountController(QObject):
 
         self._token("refresh_token", {"refresh_token": refresh_token}, self._key, refreshed)
 
-    def _restore_finished(self, session, status, code):
+    def _restore_finished(self, session, status, code, saved):
         if session:
-            self._save_session(session, self._key)
+            if saved.get("user_id", session["user"]["id"]) != session["user"]["id"]:
+                self._email = ""
+                self._finish("The saved session belongs to a different account. Sign out and try again.")
+            else:
+                self._save_session(session, self._key)
         elif code in EXPIRED_CODES:
             try:
                 platform_keyring().delete_password(KEYRING_SERVICE, KEYRING_ENTRY)
@@ -166,16 +216,46 @@ class AccountController(QObject):
             self._email = ""
             self._has_session = False
             self._finish("Session expired. Sign in again.")
+        elif (status == 0 or status == 429 or status >= 500) and saved.get("user_id"):
+            try:
+                self._bind_workspace(saved["user_id"])
+            except WorkspaceAccountMismatch:
+                self._email = ""
+                self._finish("Sign in with the account that owns this device’s local workspace.")
+            except Exception:
+                self._email = ""
+                self._finish("The saved workspace could not be opened.")
+            else:
+                self._email = saved["email"]
+                self._finish("Offline. Local edits are saved on this device.")
         else:
             self._finish("Unable to restore the session. Check your connection and retry.")
 
+    def _bind_workspace(self, owner):
+        if self._workspace is not None:
+            self._workspace.bind_account(owner)
+
     def _save_session(self, session, key):
+        user = session["user"]
+        try:
+            self._bind_workspace(user["id"])
+        except WorkspaceAccountMismatch:
+            self._email = ""
+            self._finish("Sign in with the account that owns this device’s local workspace.")
+            return
+        except Exception:
+            self._email = ""
+            self._finish("The local workspace could not be opened.")
+            return
+        credentials = json.dumps({
+            "refresh_token": session["refresh_token"], "email": user["email"], "user_id": user["id"],
+        })
         try:
             self._settings.setValue(KEY_SETTING, key)
             self._settings.sync()
             if self._settings.status() != QSettings.Status.NoError:
                 raise OSError("Unable to save account connection settings")
-            platform_keyring().set_password(KEYRING_SERVICE, KEYRING_ENTRY, session["refresh_token"])
+            platform_keyring().set_password(KEYRING_SERVICE, KEYRING_ENTRY, credentials)
         except Exception:
             self._finish("Secure session storage is unavailable. Check your system credential store.")
             return
@@ -246,6 +326,7 @@ class AccountController(QObject):
                 data = {}
             user = data.get("user")
             fields = (user.get("email") if isinstance(user, dict) else None,
+                      user.get("id") if isinstance(user, dict) else None,
                       data.get("access_token"), data.get("refresh_token"))
             valid = 200 <= status < 300 and all(isinstance(value, str) and value for value in fields)
             callback(data if valid else None, status, code)

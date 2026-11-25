@@ -4,6 +4,7 @@ import os
 import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from PySide6.QtCore import QEvent, QMetaObject, QObject, QPointF, QSettings, Qt
 from PySide6.QtWidgets import QApplication
@@ -14,6 +15,7 @@ from PySide6.QtTest import QTest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from main import load_window
+from models.account_controller import AccountController
 
 
 def capture(window: QQuickWindow, directory, name):
@@ -48,8 +50,12 @@ def main():
     with TemporaryDirectory() as data:
         QSettings.setDefaultFormat(QSettings.IniFormat)
         QSettings.setPath(QSettings.IniFormat, QSettings.UserScope, data)
-        engine, controllers = load_window(str(ROOT), data)
-        window = engine.rootObjects()[0]
+        with patch.object(AccountController, "restore"):
+            engine, controllers = load_window(str(ROOT), data)
+        controller = controllers.account_controller
+        controller._email = "preview@example.test"
+        controller.changed.emit()
+        window = engine.rootObjects()[0].findChild(QQuickWindow, "workspaceWindow")
         stack = window.findChild(QObject, "mainStack")
         onboarding = window.findChild(QObject, "onboardingView")
         project = controllers.project_controller

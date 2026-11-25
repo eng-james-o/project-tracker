@@ -46,6 +46,10 @@ class ControllerManager:
         self.notification_controller = NotificationController(self.db, parent)
         self.ai_controller = AIController(parent)
         self.account_controller = AccountController(parent, WorkspaceSync(self.db), self.refresh_all)
+        self.notification_controller.set_workspace_unlocked(False)
+        self.account_controller.changed.connect(
+            lambda: self.notification_controller.set_workspace_unlocked(bool(self.account_controller.email))
+        )
         self.project_controller.on_selection_changed = (
             self.dashboard_controller.refresh_audit_logs
         )

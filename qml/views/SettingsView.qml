@@ -89,7 +89,6 @@ ScrollView {
 
         ColumnLayout {
             Layout.fillWidth: true
-            Component.onCompleted: accountController.restore()
 
             Label {
                 text: "Project Tracker account"
@@ -102,42 +101,6 @@ ScrollView {
                 color: Style.textSecondary
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
-            }
-            ColumnLayout {
-                Layout.fillWidth: true
-                visible: !accountController.hasSession
-                enabled: !accountController.busy
-
-                CustomTextField {
-                    id: accountKey
-                    Layout.fillWidth: true
-                    label: "Supabase publishable key"
-                    placeholderText: "sb_publishable_…"
-                    text: accountController.publishableKey
-                }
-                CustomTextField {
-                    id: accountEmail
-                    Layout.fillWidth: true
-                    label: "Email"
-                    inputMethodHints: Qt.ImhEmailCharactersOnly
-                }
-                CustomTextField {
-                    id: accountPassword
-                    Layout.fillWidth: true
-                    label: "Password"
-                    echoMode: TextInput.Password
-                    inputMethodHints: Qt.ImhSensitiveData
-                }
-                CustomButton {
-                    text: "Sign in"
-                    variant: "primary"
-                    enabled: accountEmail.text.trim() !== "" && accountPassword.text !== ""
-                             && accountKey.text.trim() !== ""
-                    onClicked: {
-                        accountController.signIn(accountEmail.text, accountPassword.text, accountKey.text)
-                        accountPassword.clear()
-                    }
-                }
             }
             Label {
                 visible: accountController.email !== ""
